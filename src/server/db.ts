@@ -1,12 +1,11 @@
 import "server-only";
 import { Pool } from "pg";
 import { Email, CalendarEvent } from "@/lib/types";
-import { buildMockData } from "@/lib/mock-data";
 
 /**
  * Postgres layer. One pool serves both our app tables and the Corsair SDK
- * (corsair accepts a pg Pool directly). Schema is created and demo data
- * seeded on first connection.
+ * (corsair accepts a pg Pool directly). Schema is created automatically
+ * on first connection.
  */
 
 const g = globalThis as unknown as {
@@ -25,7 +24,7 @@ export function getPool(): Pool {
   return g.__tempoPool;
 }
 
-/** Resolves once schema exists and seed data is present. Runs once per process. */
+/** Resolves once the schema exists. Runs once per process. */
 export function ready(): Promise<void> {
   if (!g.__tempoReady) g.__tempoReady = init();
   return g.__tempoReady;
@@ -67,14 +66,67 @@ async function init() {
 
     CREATE INDEX IF NOT EXISTS emails_received_idx ON emails (received_at DESC);
     CREATE INDEX IF NOT EXISTS events_start_idx ON events (start_at);
-  `);
 
-  const { rows } = await pool.query("SELECT count(*)::int AS n FROM emails");
-  if (rows[0].n === 0) {
-    const { emails, events } = buildMockData();
-    for (const e of emails) await insertEmail(e);
-    for (const ev of events) await insertEvent(ev);
-  }
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key   text PRIMARY KEY,
+      value text NOT NULL
+    );
+
+    -- Corsair SDK tables (official Postgres migration from docs.corsair.dev)
+    CREATE TABLE IF NOT EXISTS corsair_integrations (
+      id         TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      name       TEXT NOT NULL,
+      config     JSONB NOT NULL DEFAULT '{}',
+      dek        TEXT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS corsair_accounts (
+      id             TEXT PRIMARY KEY,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      tenant_id      TEXT NOT NULL,
+      integration_id TEXT NOT NULL REFERENCES corsair_integrations(id),
+      config         JSONB NOT NULL DEFAULT '{}',
+      dek            TEXT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS corsair_entities (
+      id          TEXT PRIMARY KEY,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      account_id  TEXT NOT NULL REFERENCES corsair_accounts(id),
+      entity_id   TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      version     TEXT NOT NULL,
+      data        JSONB NOT NULL DEFAULT '{}'
+    );
+
+    CREATE TABLE IF NOT EXISTS corsair_events (
+      id         TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      account_id TEXT NOT NULL REFERENCES corsair_accounts(id),
+      event_type TEXT NOT NULL,
+      payload    JSONB NOT NULL DEFAULT '{}',
+      status     TEXT
+    );
+  `);
+}
+
+export async function getSetting(key: string): Promise<string | null> {
+  await ready();
+  const { rows } = await getPool().query("SELECT value FROM app_settings WHERE key = $1", [key]);
+  return rows[0]?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await ready();
+  await getPool().query(
+    "INSERT INTO app_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2",
+    [key, value]
+  );
 }
 
 // ── row mapping ────────────────────────────────────────────────────────

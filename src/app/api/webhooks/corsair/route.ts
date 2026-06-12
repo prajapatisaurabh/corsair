@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addEmail } from "@/server/store";
-import { isLive } from "@/server/corsair";
+import { isConnected } from "@/server/corsair";
 import { classifyPriority } from "@/server/classify";
 import { detectTimeIntent } from "@/server/time-intent";
 import { Email } from "@/lib/types";
@@ -11,7 +11,7 @@ import { Email } from "@/lib/types";
  * out to connected clients over the SSE stream.
  */
 export async function POST(req: NextRequest) {
-  if (!isLive()) return NextResponse.json({ ok: true, mode: "demo" });
+  if (!(await isConnected())) return NextResponse.json({ ok: true, mode: "demo" });
 
   const payload = await req.json();
   try {

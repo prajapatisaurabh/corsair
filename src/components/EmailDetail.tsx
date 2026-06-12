@@ -42,7 +42,7 @@ export function EmailDetail() {
               ✕ <kbd>Esc</kbd>
             </button>
           </div>
-          <div className="mt-2 flex items-center gap-2 text-[12px] text-zinc-400">
+          <div className="mt-2 flex items-center gap-2 text-[14px] text-zinc-400">
             <span className="text-zinc-200 font-medium">{email.from.name}</span>
             <span>&lt;{email.from.email}&gt;</span>
             <span>·</span>
@@ -51,19 +51,19 @@ export function EmailDetail() {
             </span>
           </div>
           {email.priorityReason && (
-            <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full">
+            <div className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-zinc-400 bg-white/5 px-2 py-0.5 rounded-full">
               ✦ AI: {email.priorityReason}
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 text-[13.5px] leading-relaxed text-zinc-200 whitespace-pre-wrap">
+        <div className="flex-1 overflow-y-auto px-6 py-5 text-[15.5px] leading-relaxed text-zinc-200 whitespace-pre-wrap">
           {email.body}
         </div>
 
         {email.timeIntent && !email.scheduledEventId && (
           <div className="mx-6 mb-3 flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
-            <div className="text-[12px] text-amber-200">
+            <div className="text-[14px] text-amber-200">
               ⏰ Mentions <b>{email.timeIntent.phrase}</b> —{" "}
               {fmtDay(email.timeIntent.start)} at {fmtTime(email.timeIntent.start)}
             </div>
@@ -72,7 +72,7 @@ export function EmailDetail() {
                 schedule(email.id);
                 closeOverlays();
               }}
-              className="shrink-0 text-[12px] px-3 py-1.5 rounded-md bg-amber-500/90 text-black font-semibold hover:bg-amber-400"
+              className="shrink-0 text-[14px] px-3 py-1.5 rounded-md bg-amber-500/90 text-black font-semibold hover:bg-amber-400"
             >
               Schedule + invite <kbd className="!bg-black/20 !border-black/30 !text-black/70">S</kbd>
             </button>
@@ -81,7 +81,7 @@ export function EmailDetail() {
 
         {replying ? (
           <div className="border-t border-white/8 p-4">
-            <div className="text-[11px] text-zinc-500 mb-2 flex items-center gap-2">
+            <div className="text-[13px] text-zinc-500 mb-2 flex items-center gap-2">
               ✦ AI draft — edit freely, then <kbd>⌘Enter</kbd> to send
             </div>
             {draftLoading ? (
@@ -97,20 +97,20 @@ export function EmailDetail() {
                   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendReply(email, reply);
                   e.stopPropagation();
                 }}
-                className="w-full h-28 bg-[#0a0a10] border border-white/10 rounded-lg p-3 text-[13px] text-zinc-100 resize-none focus:outline-none focus:border-violet-500/60"
+                className="w-full h-28 bg-[#0a0a10] border border-white/10 rounded-lg p-3 text-[15px] text-zinc-100 resize-none focus:outline-none focus:border-violet-500/60"
               />
             )}
             <div className="mt-2 flex justify-end gap-2">
               <button
                 onClick={() => sendReply(email, reply)}
-                className="text-[12px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold"
+                className="text-[14px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold"
               >
                 Send reply
               </button>
             </div>
           </div>
         ) : (
-          <div className="border-t border-white/8 px-6 py-3 flex items-center gap-2 text-[12px]">
+          <div className="border-t border-white/8 px-6 py-3 flex items-center gap-2 text-[14px]">
             <button
               onClick={() => openDetail(true)}
               className="px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-medium"

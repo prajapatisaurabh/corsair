@@ -32,7 +32,7 @@ services:
       CORSAIR_KEK: ${CORSAIR_KEK:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
-      - "3000:3000"
+      - "3456:3000"
 
 volumes:
   tempo_pgdata:

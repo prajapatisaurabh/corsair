@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEvents, addEvent, updateEmail } from "@/server/store";
-import { isLive } from "@/server/corsair";
+import { isConnected } from "@/server/corsair";
 import { CalendarEvent } from "@/lib/types";
 
 export async function GET() {
   const events = await getEvents();
-  return NextResponse.json({ events, live: isLive() });
+  return NextResponse.json({ events, live: await isConnected() });
 }
 
 // POST /api/events — create event { title, start, end, attendees, sourceEmailId? }
@@ -22,16 +22,18 @@ export async function POST(req: NextRequest) {
     color: body.sourceEmailId ? "amber" : "violet",
   };
 
-  if (isLive()) {
+  if (await isConnected()) {
     try {
       const { getCorsair } = await import("@/server/corsair");
       const corsair = await getCorsair();
       const created = await corsair.googlecalendar.events.create({
         calendarId: "primary",
-        summary: event.title,
-        start: { dateTime: event.start },
-        end: { dateTime: event.end },
-        attendees: event.attendees.map((email: string) => ({ email })),
+        event: {
+          summary: event.title,
+          start: { dateTime: event.start },
+          end: { dateTime: event.end },
+          attendees: event.attendees.map((email: string) => ({ email })),
+        },
         sendUpdates: "all",
       });
       if (created?.id) event.id = created.id;

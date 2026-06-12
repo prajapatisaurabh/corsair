@@ -9,7 +9,7 @@ export function Toasts() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`animate-slide-in text-[12.5px] px-3.5 py-2 rounded-lg border shadow-xl max-w-[380px] ${
+          className={`animate-slide-in text-[14px] px-3.5 py-2 rounded-lg border shadow-xl max-w-[380px] ${
             t.kind === "success"
               ? "bg-emerald-950/90 border-emerald-500/40 text-emerald-100"
               : t.kind === "error"

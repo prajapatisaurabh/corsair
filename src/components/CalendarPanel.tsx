@@ -37,7 +37,7 @@ export function CalendarPanel() {
     <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0c0c13] flex flex-col">
       {unscheduled.length > 0 && (
         <div className="px-3 py-2 border-b border-white/8">
-          <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">
+          <div className="text-[12px] uppercase tracking-wider text-zinc-500 mb-1.5">
             Waiting to be scheduled
           </div>
           <div className="flex flex-col gap-1">
@@ -45,7 +45,7 @@ export function CalendarPanel() {
               <button
                 key={e.id}
                 onClick={() => schedule(e.id)}
-                className="flex items-center justify-between gap-2 text-left text-[11px] px-2 py-1.5 rounded-md bg-amber-500/10 border border-dashed border-amber-500/35 text-amber-200 hover:bg-amber-500/20 transition-colors"
+                className="flex items-center justify-between gap-2 text-left text-[13px] px-2 py-1.5 rounded-md bg-amber-500/10 border border-dashed border-amber-500/35 text-amber-200 hover:bg-amber-500/20 transition-colors"
               >
                 <span className="truncate">
                   {e.from.name}: {e.timeIntent!.phrase}
@@ -60,7 +60,7 @@ export function CalendarPanel() {
       <div className="grid shrink-0 border-b border-white/8" style={{ gridTemplateColumns: `40px repeat(${DAYS}, 1fr)` }}>
         <div />
         {days.map((d, i) => (
-          <div key={i} className="px-2 py-1.5 text-[11px] text-center">
+          <div key={i} className="px-2 py-1.5 text-[13px] text-center">
             <span className={i === 0 ? "text-violet-300 font-semibold" : "text-zinc-400"}>
               {i === 0 ? "Today" : fmtDay(d)}
             </span>
@@ -80,7 +80,7 @@ export function CalendarPanel() {
             {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => (
               <div
                 key={i}
-                className="absolute right-1.5 text-[9px] text-zinc-600 -translate-y-1/2"
+                className="absolute right-1.5 text-[11px] text-zinc-600 -translate-y-1/2"
                 style={{ top: i * HOUR_PX }}
               >
                 {((START_HOUR + i - 1) % 12) + 1}
@@ -151,12 +151,12 @@ function DayColumn({
             style={{ top: Math.max(0, top), height }}
             title={`${ev.title} · ${fmtTime(ev.start)}–${fmtTime(ev.end)}`}
           >
-            <div className="text-[10px] font-medium leading-tight truncate">
+            <div className="text-[12px] font-medium leading-tight truncate">
               {ev.sourceEmailId && "✉ "}
               {ev.title}
             </div>
             {height > 34 && (
-              <div className="text-[9px] opacity-70">
+              <div className="text-[11px] opacity-70">
                 {fmtTime(ev.start)} · {ev.attendees.filter((a) => a !== "me@tempo.app").join(", ") || "just you"}
               </div>
             )}

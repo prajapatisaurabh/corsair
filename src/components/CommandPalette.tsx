@@ -71,19 +71,19 @@ export function CommandPalette() {
               if (e.key === "Escape") setPaletteOpen(false);
             }}
             placeholder="Tell the agent what to do…"
-            className="flex-1 bg-transparent text-[14px] focus:outline-none placeholder:text-zinc-600"
+            className="flex-1 bg-transparent text-[16px] focus:outline-none placeholder:text-zinc-600"
           />
-          {loading && <span className="text-[11px] text-zinc-500 animate-pulse">planning…</span>}
+          {loading && <span className="text-[13px] text-zinc-500 animate-pulse">planning…</span>}
         </div>
 
         {!plan && !loading && (
           <div className="px-4 py-3">
-            <div className="text-[10px] uppercase tracking-wider text-zinc-600 mb-2">Try</div>
+            <div className="text-[12px] uppercase tracking-wider text-zinc-600 mb-2">Try</div>
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 onClick={() => setInput(s)}
-                className="block w-full text-left text-[12.5px] text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md px-2 py-1.5 truncate"
+                className="block w-full text-left text-[14px] text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-md px-2 py-1.5 truncate"
               >
                 “{s}”
               </button>
@@ -93,12 +93,12 @@ export function CommandPalette() {
 
         {plan && (
           <div className="px-4 py-3">
-            <div className="text-[12px] text-zinc-400 mb-2.5">{plan.reply}</div>
+            <div className="text-[14px] text-zinc-400 mb-2.5">{plan.reply}</div>
             <div className="flex flex-col gap-1.5">
               {plan.actions.map((a, i) => (
                 <div
                   key={i}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-[12.5px] ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-[14px] ${
                     a.type === "unknown"
                       ? "border-white/8 text-zinc-500"
                       : a.type === "create_event"
@@ -111,7 +111,7 @@ export function CommandPalette() {
                   </span>
                   <span className="flex-1 truncate">{a.summary}</span>
                   {a.email && (
-                    <span className="text-[11px] text-zinc-500 truncate max-w-[180px]">
+                    <span className="text-[13px] text-zinc-500 truncate max-w-[180px]">
                       “{a.email.body.split("\n").find((l) => l.trim() && !l.startsWith("Hi"))?.trim()}”
                     </span>
                   )}
@@ -122,14 +122,14 @@ export function CommandPalette() {
               <div className="mt-3 flex items-center justify-between">
                 <button
                   onClick={() => setPlan(null)}
-                  className="text-[12px] text-zinc-500 hover:text-zinc-300"
+                  className="text-[14px] text-zinc-500 hover:text-zinc-300"
                 >
                   ← edit command
                 </button>
                 <button
                   onClick={execute}
                   disabled={executing}
-                  className="text-[12.5px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
+                  className="text-[14px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
                 >
                   {executing ? "Running via Corsair…" : "Execute"} <kbd className="!bg-black/25">↵</kbd>
                 </button>
@@ -138,7 +138,7 @@ export function CommandPalette() {
           </div>
         )}
 
-        <div className="px-4 py-2 border-t border-white/8 text-[10.5px] text-zinc-600 flex gap-4">
+        <div className="px-4 py-2 border-t border-white/8 text-[12px] text-zinc-600 flex gap-4">
           <span>Powered by Corsair MCP · Gmail + Google Calendar</span>
           <span className="ml-auto">
             <kbd>↵</kbd> plan / run · <kbd>Esc</kbd> close

@@ -16,10 +16,9 @@ cp .env.example .env            # DATABASE_URL is pre-filled
 npm run dev
 ```
 
-Open http://localhost:3000. Schema is created and demo data seeded into
-Postgres automatically on first request. A "new email" arrives over the
-realtime stream ~18s in so you can show live updates. To reset demo data:
-`docker compose down -v && docker compose up -d postgres`.
+Open http://localhost:3456, hit **Sign in → Continue with Google** and the
+app backfills your real inbox (latest messages, AI-classified) and the next
+two weeks of your calendar. Schema is created in Postgres automatically.
 
 ## Deploy (VPS with Docker)
 
@@ -29,29 +28,27 @@ export POSTGRES_PASSWORD=<strong-password>
 docker compose --profile prod up -d --build
 ```
 
-That starts Postgres + the app (multi-stage standalone build) on port 3000.
+That starts Postgres + the app (multi-stage standalone build) on port 3456.
 Put nginx/Caddy with TLS in front and set `CORSAIR_KEK` /
 `ANTHROPIC_API_KEY` in the environment to go fully live.
 
 ## The demo script (≈3 minutes)
 
-1. **Unified timeline** — inbox lanes (Urgent / Normal / Low, AI-classified)
-   on the left, your next 3 days on the right. Emails that *mention a time*
-   show an amber ⏰ chip and wait in the "to be scheduled" tray.
-2. **One-keystroke scheduling** — select Dev Jain's "sync tomorrow at 2pm"
-   email, press **S**: it snaps onto the calendar as an event, the invite is
-   sent (Corsair → `googlecalendar.events.create`), and the email archives
-   itself.
+1. **Sign in with Google** — one consent flow (Corsair-generated) connects
+   Gmail + Calendar; your real inbox and schedule appear, AI-classified into
+   Urgent / Normal / Low lanes with time-intents already detected.
+2. **One-keystroke scheduling** — pick any email proposing a time (amber ⏰
+   chip), press **S**: it snaps onto the calendar and the real invite is
+   sent (Corsair → `googlecalendar.events.create`), archiving the email.
 3. **Speed triage** — press **T**: one email at a time, single keys
    (E archive · S schedule · R AI-reply · H snooze), streak counter, timer.
-   Inbox zero in under a minute.
+   Inbox zero in under a minute — on your actual Gmail.
 4. **Agent palette (Corsair MCP)** — **⌘K**, then the hackathon brief's own
    example: *"Send a calendar invite to dev@corsair.dev at 9 AM next
    Thursday. Send him an email too saying I look forward to our meeting."*
-   The agent previews both actions; **Enter** executes them.
-5. **Realtime** — around now the Corsair Team email lands live (webhook-fed
-   SSE, no polling), pre-classified urgent with its time-intent already
-   detected. Press **S** on it. Done.
+   The agent previews both actions; **Enter** executes them for real.
+5. **Realtime** — new mail lands in the timeline over SSE via the Corsair
+   webhook receiver, pre-classified with time-intent parsed. No polling.
 
 ## Keyboard map
 

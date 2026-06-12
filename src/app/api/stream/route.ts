@@ -1,14 +1,11 @@
-import { getListeners, addEmail, hasEmail } from "@/server/store";
-import { buildLiveDemoEmail, LIVE_DEMO_EMAIL_ID } from "@/lib/mock-data";
+import { getListeners } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Server-Sent Events stream. In live mode, Corsair webhooks
- * (/api/webhooks/corsair) broadcast into this stream. In demo mode a
- * "new email" lands ~18s after the page connects, so realtime can be
- * shown without waiting on Gmail. (Postgres dedupes it by fixed id, so
- * it only ever arrives once per database.)
+ * Server-Sent Events stream. Corsair webhooks (/api/webhooks/corsair) and
+ * any server-side write broadcast into this stream, so connected browsers
+ * update in realtime without polling.
  */
 export async function GET() {
   const listeners = getListeners();
@@ -16,9 +13,6 @@ export async function GET() {
 
   let listener: ((e: { type: string; payload: unknown }) => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
-  let demoTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const demoEmailPending = !process.env.CORSAIR_KEK && !(await hasEmail(LIVE_DEMO_EMAIL_ID));
 
   const stream = new ReadableStream({
     start(controller) {
@@ -35,15 +29,10 @@ export async function GET() {
       send("connected", { at: new Date().toISOString() });
 
       heartbeat = setInterval(() => send("ping", {}), 25_000);
-
-      if (demoEmailPending) {
-        demoTimer = setTimeout(() => addEmail(buildLiveDemoEmail()), 18_000);
-      }
     },
     cancel() {
       if (listener) getListeners().delete(listener);
       if (heartbeat) clearInterval(heartbeat);
-      if (demoTimer) clearTimeout(demoTimer);
     },
   });
 
