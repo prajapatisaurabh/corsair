@@ -1,10 +1,10 @@
 import "server-only";
+import { getPool } from "./db";
 
 /**
  * Live Corsair wiring. Activates when CORSAIR_KEK is set.
- *
- * Demo mode (no env) never touches this module's heavy imports because
- * everything is lazy — the in-memory provider is used instead.
+ * Corsair shares the app's Postgres pool — its tables
+ * (corsair_integrations, corsair_accounts, …) live alongside ours.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,19 +18,15 @@ export async function getCorsair() {
   if (!isLive()) throw new Error("Corsair live mode is not configured (CORSAIR_KEK missing)");
   if (corsairInstance) return corsairInstance;
 
-  const [{ createCorsair }, { gmail }, { googlecalendar }, { default: Database }] =
-    await Promise.all([
-      import("corsair"),
-      import("@corsair-dev/gmail"),
-      import("@corsair-dev/googlecalendar"),
-      import("better-sqlite3"),
-    ]);
-
-  const db = new Database(process.env.CORSAIR_DB_PATH ?? "corsair.db");
+  const [{ createCorsair }, { gmail }, { googlecalendar }] = await Promise.all([
+    import("corsair"),
+    import("@corsair-dev/gmail"),
+    import("@corsair-dev/googlecalendar"),
+  ]);
 
   corsairInstance = createCorsair({
     plugins: [gmail(), googlecalendar()],
-    database: db,
+    database: getPool(),
     kek: process.env.CORSAIR_KEK!,
     multiTenancy: false,
   });

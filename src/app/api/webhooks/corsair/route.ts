@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       ...(await classifyPriority(subject, body)),
       timeIntent: detectTimeIntent(`${subject} ${body}`) ?? undefined,
     };
-    addEmail(email);
+    await addEmail(email);
   } catch (err) {
     console.error("webhook parse failed", err);
   }

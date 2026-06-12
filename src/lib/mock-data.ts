@@ -235,14 +235,16 @@ export function buildMockData(): { emails: Email[]; events: CalendarEvent[] } {
   return { emails, events };
 }
 
+export const LIVE_DEMO_EMAIL_ID = "live-demo";
+
 /** The email that "arrives" live over the realtime stream during a demo. */
 export function buildLiveDemoEmail(): Email {
   const now = new Date();
   const tomorrow11 = addDays(startOfDay(now), 1);
   tomorrow11.setHours(11, 0);
   return {
-    id: `live-${Date.now()}`,
-    threadId: `t-live-${Date.now()}`,
+    id: LIVE_DEMO_EMAIL_ID,
+    threadId: "t-live-demo",
     from: { name: "Corsair Team", email: "team@corsair.dev" },
     to: ["me@tempo.app"],
     subject: "Mentor check-in tomorrow at 11am?",

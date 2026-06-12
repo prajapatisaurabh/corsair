@@ -7,16 +7,31 @@ A Superhuman-style Gmail + Google Calendar client built for the **Corsair Hackat
 > separate apps. Tempo fuses them into one keyboard-first timeline, powered by
 > [Corsair](https://corsair.dev) for all Gmail / Google Calendar plumbing.
 
-## Run it
+## Run it (local dev)
 
 ```bash
 npm install
+docker compose up -d postgres   # Postgres 16 on :5432
+cp .env.example .env            # DATABASE_URL is pre-filled
 npm run dev
 ```
 
-Open http://localhost:3000. **Demo mode needs zero config** — rich seed data
-loads, and a "new email" arrives over the realtime stream ~18s in so you can
-show live updates.
+Open http://localhost:3000. Schema is created and demo data seeded into
+Postgres automatically on first request. A "new email" arrives over the
+realtime stream ~18s in so you can show live updates. To reset demo data:
+`docker compose down -v && docker compose up -d postgres`.
+
+## Deploy (VPS with Docker)
+
+```bash
+git clone <repo> && cd <repo>
+export POSTGRES_PASSWORD=<strong-password>
+docker compose --profile prod up -d --build
+```
+
+That starts Postgres + the app (multi-stage standalone build) on port 3000.
+Put nginx/Caddy with TLS in front and set `CORSAIR_KEK` /
+`ANTHROPIC_API_KEY` in the environment to go fully live.
 
 ## The demo script (≈3 minutes)
 
@@ -62,18 +77,27 @@ show live updates.
 - ✅ **Bonus: keyboard-first** everything
 - ✅ Plus the twist: time-intent detection → one-keystroke email→event scheduling
 
+## Database
+
+Everything runs on **Postgres 16** (Docker). One database, two owners:
+
+- **App tables** (`emails`, `events`) — created/seeded automatically by
+  `src/server/db.ts`; all inbox/calendar state survives restarts.
+- **Corsair tables** (`corsair_integrations`, `corsair_accounts`, …) — the
+  Corsair SDK is handed the *same* `pg` Pool and manages encrypted OAuth
+  credentials, cached entities, and webhook events itself.
+
 ## Going live with Corsair
 
-Demo mode runs on an in-memory store. To wire real Gmail/Calendar:
-
-1. `cp .env.example .env` and set `CORSAIR_KEK` (`openssl rand -base64 32`).
-2. Create the Corsair tables (SQLite): the SDK's `createCorsairDatabase` /
-   docs migration sets up `corsair_integrations`, `corsair_accounts`,
-   `corsair_entities`, `corsair_events`.
-3. Connect Google OAuth via Corsair's connect link flow (see
-   [docs.corsair.dev](https://docs.corsair.dev) → Tenants and auth).
+1. Set `CORSAIR_KEK` in `.env` (`openssl rand -base64 32`).
+2. Create a Google Cloud OAuth client with Gmail + Calendar scopes (testing
+   mode + your account as test user is enough for a demo).
+3. Connect Google via Corsair's connect link flow (see
+   [docs.corsair.dev](https://docs.corsair.dev) → Tenants and auth) —
+   one consent screen grants both Gmail and Calendar.
 4. Point a Corsair Gmail webhook at `/api/webhooks/corsair` — new mail then
-   flows: webhook → classify (Haiku) → time-intent (chrono) → SSE → UI.
+   flows: webhook → classify (Haiku) → time-intent (chrono) → Postgres →
+   SSE → UI.
 5. Optionally set `ANTHROPIC_API_KEY` for Claude-powered palette parsing,
    reply drafts, and priority classification.
 

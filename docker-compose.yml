@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tempo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tempo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tempo}
+      POSTGRES_DB: tempo
+    ports:
+      - "5432:5432"
+    volumes:
+      - tempo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tempo -d tempo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Production app (VPS). For local dev run only postgres:
+  #   docker compose up -d postgres
+  app:
+    build: .
+    container_name: tempo-app
+    restart: unless-stopped
+    profiles: ["prod"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://tempo:${POSTGRES_PASSWORD:-tempo}@postgres:5432/tempo
+      CORSAIR_KEK: ${CORSAIR_KEK:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  tempo_pgdata:

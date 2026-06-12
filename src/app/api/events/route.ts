@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, addEvent, updateEmail } from "@/server/store";
+import { getEvents, addEvent, updateEmail } from "@/server/store";
 import { isLive } from "@/server/corsair";
 import { CalendarEvent } from "@/lib/types";
 
 export async function GET() {
-  const store = getStore();
-  return NextResponse.json({ events: store.events, live: isLive() });
+  const events = await getEvents();
+  return NextResponse.json({ events, live: isLive() });
 }
 
 // POST /api/events — create event { title, start, end, attendees, sourceEmailId? }
@@ -41,9 +41,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  addEvent(event);
+  await addEvent(event);
   if (event.sourceEmailId) {
-    updateEmail(event.sourceEmailId, { scheduledEventId: event.id, archived: true });
+    await updateEmail(event.sourceEmailId, { scheduledEventId: event.id, archived: true });
   }
   return NextResponse.json({ event });
 }

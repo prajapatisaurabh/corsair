@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, updateEmail, broadcast } from "@/server/store";
+import { getEmails, updateEmail, broadcast } from "@/server/store";
 import { isLive } from "@/server/corsair";
 
 export async function GET() {
-  const store = getStore();
-  return NextResponse.json({ emails: store.emails, live: isLive() });
+  const emails = await getEmails();
+  return NextResponse.json({ emails, live: isLive() });
 }
 
 // PATCH /api/emails — { id, ...patch } for archive / snooze / read state
 export async function PATCH(req: NextRequest) {
   const { id, ...patch } = await req.json();
-  const email = updateEmail(id, patch);
+  const email = await updateEmail(id, patch);
   if (!email) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   if (isLive()) {
