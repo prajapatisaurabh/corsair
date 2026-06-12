@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useTempo, visibleEmails } from "@/lib/store";
 import { addDays, fmtDay, fmtTime, startOfDay } from "@/lib/time";
 import { CalendarEvent } from "@/lib/types";
+
+const emptySubscribe = () => () => {};
+/** false during SSR/hydration, true on the client — no state, no effect. */
+function useHydrated() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 const START_HOUR = 8;
 const END_HOUR = 20;
@@ -22,9 +32,8 @@ export function CalendarPanel() {
   const { events, emails, schedule } = useTempo();
   // Time-of-day rendering only happens client-side to avoid SSR hydration
   // mismatches (the "now" line and day labels depend on the clock).
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) {
+  const hydrated = useHydrated();
+  if (!hydrated) {
     return (
       <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0e0c16]" />
     );

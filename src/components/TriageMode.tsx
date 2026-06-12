@@ -21,20 +21,27 @@ export function TriageMode() {
     triageStreak,
     bumpStreak,
   } = useTempo();
-  const [startedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
 
   const queue = visibleEmails(emails, "all");
   const current = queue[0];
 
+  // The session clock resets when triage opens (state-during-render pattern).
+  const [prevView, setPrevView] = useState(view);
+  if (prevView !== view) {
+    setPrevView(view);
+    if (view === "triage") setElapsed(0);
+  }
+
   useEffect(() => {
     if (view !== "triage") return;
+    const startedAt = Date.now();
     const t = setInterval(
       () => setElapsed(Math.floor((Date.now() - startedAt) / 1000)),
       1000,
     );
     return () => clearInterval(t);
-  }, [view, startedAt]);
+  }, [view]);
 
   useEffect(() => {
     if (view !== "triage" || !current) return;

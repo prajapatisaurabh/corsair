@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTempo } from "@/lib/store";
 import { fmtDay, fmtTime } from "@/lib/time";
 
@@ -19,10 +19,13 @@ export function EmailDetail() {
   } = useTempo();
   const email = emails.find((e) => e.id === selectedId);
   const [reply, setReply] = useState("");
-
-  useEffect(() => {
+  // Reset the textarea when a new AI draft arrives (state-during-render
+  // pattern — https://react.dev/learn/you-might-not-need-an-effect)
+  const [prevDraft, setPrevDraft] = useState(replyDraft);
+  if (prevDraft !== replyDraft) {
+    setPrevDraft(replyDraft);
     setReply(replyDraft ?? "");
-  }, [replyDraft]);
+  }
 
   if (!detailOpen || !email) return null;
 

@@ -22,11 +22,21 @@ export function CommandPalette() {
   const [executing, setExecuting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  // Reset fields the moment the palette opens (state-during-render pattern).
+  const [wasOpen, setWasOpen] = useState(paletteOpen);
+  if (wasOpen !== paletteOpen) {
+    setWasOpen(paletteOpen);
     if (paletteOpen) {
       setInput("");
       setPlan(null);
-      setTimeout(() => inputRef.current?.focus(), 30);
+    }
+  }
+
+  // Focus is a real DOM side effect — that part stays in an effect.
+  useEffect(() => {
+    if (paletteOpen) {
+      const t = setTimeout(() => inputRef.current?.focus(), 30);
+      return () => clearTimeout(t);
     }
   }, [paletteOpen]);
 
