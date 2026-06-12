@@ -25,7 +25,7 @@ const FEATURES = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
       <header className="max-w-5xl mx-auto flex items-center justify-between px-6 h-16">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
@@ -34,7 +34,10 @@ export default function Landing() {
           <span className="font-semibold tracking-tight text-lg">Tempo</span>
         </div>
         <nav className="flex items-center gap-3 text-sm">
-          <Link href="/app" className="text-zinc-400 hover:text-white px-3 py-1.5">
+          <Link
+            href="/app"
+            className="text-zinc-400 hover:text-white px-3 py-1.5"
+          >
             Open app
           </Link>
           <Link
@@ -59,9 +62,9 @@ export default function Landing() {
             </span>
           </h1>
           <p className="mt-6 text-lg text-zinc-400 max-w-xl mx-auto">
-            Almost every important email is secretly about time. Tempo fuses Gmail
-            and Google Calendar into one keyboard-first timeline — so scheduling
-            is a keystroke, not a tab-switch.
+            Almost every important email is secretly about time. Tempo fuses
+            Gmail and Google Calendar into one keyboard-first timeline — so
+            scheduling is a keystroke, not a tab-switch.
           </p>
           <div className="mt-9 flex items-center justify-center gap-3">
             <Link
@@ -72,7 +75,8 @@ export default function Landing() {
             </Link>
           </div>
           <p className="mt-4 text-[14px] text-zinc-600">
-            One sign-in connects Gmail and Calendar — tokens encrypted by Corsair.
+            One sign-in connects Gmail and Calendar — tokens encrypted by
+            Corsair.
           </p>
         </section>
 
@@ -91,7 +95,8 @@ export default function Landing() {
       </main>
 
       <footer className="border-t border-white/8 py-6 text-center text-[14px] text-zinc-600">
-        Tempo · powered by Corsair · Builder Mode On | MacBook Giveaway Hackathon
+        Tempo · powered by Corsair · Builder Mode On | MacBook Giveaway
+        Hackathon
       </footer>
     </div>
   );

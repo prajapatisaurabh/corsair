@@ -32,13 +32,18 @@ export function EmailDetail() {
     <div className="absolute inset-0 z-30 flex" onClick={closeOverlays}>
       <div className="flex-1 bg-black/50 backdrop-blur-[2px]" />
       <div
-        className="w-[620px] h-full bg-[#101018] border-l border-white/10 flex flex-col animate-pop-in shadow-2xl"
+        className="w-[620px] h-full bg-[#131020] border-l border-white/10 flex flex-col animate-pop-in shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 pt-5 pb-4 border-b border-white/8">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="text-[17px] font-semibold leading-snug">{email.subject}</h2>
-            <button onClick={closeOverlays} className="text-zinc-500 hover:text-white text-sm mt-0.5">
+            <h2 className="text-[17px] font-semibold leading-snug">
+              {email.subject}
+            </h2>
+            <button
+              onClick={closeOverlays}
+              className="text-zinc-500 hover:text-white text-sm mt-0.5"
+            >
               ✕ <kbd>Esc</kbd>
             </button>
           </div>
@@ -65,7 +70,8 @@ export function EmailDetail() {
           <div className="mx-6 mb-3 flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <div className="text-[14px] text-amber-200">
               ⏰ Mentions <b>{email.timeIntent.phrase}</b> —{" "}
-              {fmtDay(email.timeIntent.start)} at {fmtTime(email.timeIntent.start)}
+              {fmtDay(email.timeIntent.start)} at{" "}
+              {fmtTime(email.timeIntent.start)}
             </div>
             <button
               onClick={() => {
@@ -74,7 +80,10 @@ export function EmailDetail() {
               }}
               className="shrink-0 text-[14px] px-3 py-1.5 rounded-md bg-amber-500/90 text-black font-semibold hover:bg-amber-400"
             >
-              Schedule + invite <kbd className="!bg-black/20 !border-black/30 !text-black/70">S</kbd>
+              Schedule + invite{" "}
+              <kbd className="!bg-black/20 !border-black/30 !text-black/70">
+                S
+              </kbd>
             </button>
           </div>
         )}
@@ -94,10 +103,11 @@ export function EmailDetail() {
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendReply(email, reply);
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter")
+                    sendReply(email, reply);
                   e.stopPropagation();
                 }}
-                className="w-full h-28 bg-[#0a0a10] border border-white/10 rounded-lg p-3 text-[15px] text-zinc-100 resize-none focus:outline-none focus:border-violet-500/60"
+                className="w-full h-28 bg-[#0c0a14] border border-white/10 rounded-lg p-3 text-[15px] text-zinc-100 resize-none focus:outline-none focus:border-violet-500/60"
               />
             )}
             <div className="mt-2 flex justify-end gap-2">

@@ -14,7 +14,7 @@ export function Toasts() {
               ? "bg-emerald-950/90 border-emerald-500/40 text-emerald-100"
               : t.kind === "error"
                 ? "bg-rose-950/90 border-rose-500/40 text-rose-100"
-                : "bg-[#16161f]/95 border-white/15 text-zinc-200"
+                : "bg-[#191529]/95 border-white/15 text-zinc-200"
           }`}
         >
           {t.text}

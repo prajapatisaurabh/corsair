@@ -36,7 +36,10 @@ export function CommandPalette() {
     if (!input.trim() || loading) return;
     setLoading(true);
     setPlan(null);
-    const res = await fetch("/api/agent", { method: "POST", body: JSON.stringify({ command: input }) });
+    const res = await fetch("/api/agent", {
+      method: "POST",
+      body: JSON.stringify({ command: input }),
+    });
     setPlan(await res.json());
     setLoading(false);
   };
@@ -56,7 +59,7 @@ export function CommandPalette() {
       onClick={() => setPaletteOpen(false)}
     >
       <div
-        className="w-[680px] bg-[#12121b] border border-white/12 rounded-xl shadow-2xl animate-pop-in overflow-hidden"
+        className="w-[680px] bg-[#151223] border border-white/12 rounded-xl shadow-2xl animate-pop-in overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
@@ -67,18 +70,24 @@ export function CommandPalette() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               e.stopPropagation();
-              if (e.key === "Enter") (plan && runnable ? execute() : submit());
+              if (e.key === "Enter") plan && runnable ? execute() : submit();
               if (e.key === "Escape") setPaletteOpen(false);
             }}
             placeholder="Tell the agent what to do…"
             className="flex-1 bg-transparent text-[16px] focus:outline-none placeholder:text-zinc-600"
           />
-          {loading && <span className="text-[13px] text-zinc-500 animate-pulse">planning…</span>}
+          {loading && (
+            <span className="text-[13px] text-zinc-500 animate-pulse">
+              planning…
+            </span>
+          )}
         </div>
 
         {!plan && !loading && (
           <div className="px-4 py-3">
-            <div className="text-[12px] uppercase tracking-wider text-zinc-600 mb-2">Try</div>
+            <div className="text-[12px] uppercase tracking-wider text-zinc-600 mb-2">
+              Try
+            </div>
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
@@ -107,12 +116,21 @@ export function CommandPalette() {
                   }`}
                 >
                   <span className="text-base">
-                    {a.type === "create_event" ? "📅" : a.type === "send_email" ? "✉️" : "❔"}
+                    {a.type === "create_event"
+                      ? "📅"
+                      : a.type === "send_email"
+                        ? "✉️"
+                        : "❔"}
                   </span>
                   <span className="flex-1 truncate">{a.summary}</span>
                   {a.email && (
                     <span className="text-[13px] text-zinc-500 truncate max-w-[180px]">
-                      “{a.email.body.split("\n").find((l) => l.trim() && !l.startsWith("Hi"))?.trim()}”
+                      “
+                      {a.email.body
+                        .split("\n")
+                        .find((l) => l.trim() && !l.startsWith("Hi"))
+                        ?.trim()}
+                      ”
                     </span>
                   )}
                 </div>
@@ -131,7 +149,8 @@ export function CommandPalette() {
                   disabled={executing}
                   className="text-[14px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
                 >
-                  {executing ? "Running via Corsair…" : "Execute"} <kbd className="!bg-black/25">↵</kbd>
+                  {executing ? "Running via Corsair…" : "Execute"}{" "}
+                  <kbd className="!bg-black/25">↵</kbd>
                 </button>
               </div>
             )}

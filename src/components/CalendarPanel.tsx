@@ -25,16 +25,18 @@ export function CalendarPanel() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) {
-    return <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0c0c13]" />;
+    return (
+      <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0e0c16]" />
+    );
   }
   const today = startOfDay(new Date());
   const days = Array.from({ length: DAYS }, (_, i) => addDays(today, i));
   const unscheduled = visibleEmails(emails, "all").filter(
-    (e) => e.timeIntent && !e.scheduledEventId
+    (e) => e.timeIntent && !e.scheduledEventId,
   );
 
   return (
-    <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0c0c13] flex flex-col">
+    <aside className="w-[420px] shrink-0 border-l border-white/8 bg-[#0e0c16] flex flex-col">
       {unscheduled.length > 0 && (
         <div className="px-3 py-2 border-b border-white/8">
           <div className="text-[12px] uppercase tracking-wider text-zinc-500 mb-1.5">
@@ -57,11 +59,18 @@ export function CalendarPanel() {
         </div>
       )}
 
-      <div className="grid shrink-0 border-b border-white/8" style={{ gridTemplateColumns: `40px repeat(${DAYS}, 1fr)` }}>
+      <div
+        className="grid shrink-0 border-b border-white/8"
+        style={{ gridTemplateColumns: `40px repeat(${DAYS}, 1fr)` }}
+      >
         <div />
         {days.map((d, i) => (
           <div key={i} className="px-2 py-1.5 text-[13px] text-center">
-            <span className={i === 0 ? "text-violet-300 font-semibold" : "text-zinc-400"}>
+            <span
+              className={
+                i === 0 ? "text-violet-300 font-semibold" : "text-zinc-400"
+              }
+            >
               {i === 0 ? "Today" : fmtDay(d)}
             </span>
           </div>
@@ -110,7 +119,7 @@ function DayColumn({
   const dayStart = new Date(day);
   dayStart.setHours(START_HOUR, 0, 0, 0);
   const dayEvents = events.filter(
-    (ev) => startOfDay(new Date(ev.start)).getTime() === day.getTime()
+    (ev) => startOfDay(new Date(ev.start)).getTime() === day.getTime(),
   );
 
   const now = new Date();
@@ -126,22 +135,29 @@ function DayColumn({
         />
       ))}
 
-      {isToday && nowOffset > 0 && nowOffset < (END_HOUR - START_HOUR) * HOUR_PX && (
-        <div className="absolute left-0 right-0 z-10 flex items-center" style={{ top: nowOffset }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 -ml-0.5" />
-          <div className="flex-1 h-px bg-rose-400/70" />
-        </div>
-      )}
+      {isToday &&
+        nowOffset > 0 &&
+        nowOffset < (END_HOUR - START_HOUR) * HOUR_PX && (
+          <div
+            className="absolute left-0 right-0 z-10 flex items-center"
+            style={{ top: nowOffset }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 -ml-0.5" />
+            <div className="flex-1 h-px bg-rose-400/70" />
+          </div>
+        )}
 
       {dayEvents.map((ev) => {
         const start = new Date(ev.start);
         const end = new Date(ev.end);
-        const top = ((start.getTime() - dayStart.getTime()) / 3600_000) * HOUR_PX;
+        const top =
+          ((start.getTime() - dayStart.getTime()) / 3600_000) * HOUR_PX;
         const height = Math.max(
           22,
-          ((end.getTime() - start.getTime()) / 3600_000) * HOUR_PX - 2
+          ((end.getTime() - start.getTime()) / 3600_000) * HOUR_PX - 2,
         );
-        if (top + height < 0 || top > (END_HOUR - START_HOUR) * HOUR_PX) return null;
+        if (top + height < 0 || top > (END_HOUR - START_HOUR) * HOUR_PX)
+          return null;
         return (
           <div
             key={ev.id}
@@ -157,7 +173,9 @@ function DayColumn({
             </div>
             {height > 34 && (
               <div className="text-[11px] opacity-70">
-                {fmtTime(ev.start)} · {ev.attendees.filter((a) => a !== "me@tempo.app").join(", ") || "just you"}
+                {fmtTime(ev.start)} ·{" "}
+                {ev.attendees.filter((a) => a !== "me@tempo.app").join(", ") ||
+                  "just you"}
               </div>
             )}
           </div>

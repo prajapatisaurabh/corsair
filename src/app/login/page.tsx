@@ -28,7 +28,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-[#0b0a12] text-zinc-100 flex flex-col">
       <header className="max-w-5xl w-full mx-auto flex items-center px-6 h-16">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
@@ -41,7 +41,9 @@ export default function Login() {
       <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
-            <h1 className="text-xl font-semibold text-center">Welcome to Tempo</h1>
+            <h1 className="text-xl font-semibold text-center">
+              Welcome to Tempo
+            </h1>
             <p className="mt-2 text-sm text-zinc-400 text-center">
               One sign-in connects Gmail <i>and</i> Google Calendar —<br />
               OAuth handled end-to-end by Corsair.

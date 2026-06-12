@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useTempo, visibleEmails } from "@/lib/store";
 
 export function TopBar() {
-  const { live, filter, setFilter, emails, setView, setPaletteOpen } = useTempo();
+  const { live, filter, setFilter, emails, setView, setPaletteOpen } =
+    useTempo();
   const counts = {
     all: visibleEmails(emails, "all").length,
     urgent: visibleEmails(emails, "urgent").length,
@@ -20,7 +21,7 @@ export function TopBar() {
   ] as const;
 
   return (
-    <header className="flex items-center gap-4 px-4 h-12 border-b border-white/8 bg-[#0d0d14] shrink-0">
+    <header className="flex items-center gap-4 px-4 h-12 border-b border-white/8 bg-[#0f0d17] shrink-0">
       <Link
         href="/"
         title="Back to home"
@@ -43,7 +44,9 @@ export function TopBar() {
                 : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
             }`}
           >
-            {"dot" in l && l.dot && <span className={`w-1.5 h-1.5 rounded-full ${l.dot}`} />}
+            {"dot" in l && l.dot && (
+              <span className={`w-1.5 h-1.5 rounded-full ${l.dot}`} />
+            )}
             {l.label}
             <span className="text-zinc-500">{counts[l.key]}</span>
           </button>
@@ -72,7 +75,9 @@ export function TopBar() {
             : "text-amber-300/90 border-amber-500/30 bg-amber-500/10"
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-amber-400"}`} />
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${live ? "bg-emerald-400" : "bg-amber-400"}`}
+        />
         {live ? "Live · Corsair" : "Not connected"}
       </span>
     </header>
