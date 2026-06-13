@@ -10,7 +10,10 @@ import { detectTimeIntent } from "./time-intent";
  * Initial backfill after Google connect: replace demo data with the user's
  * real inbox (latest messages) and upcoming calendar events.
  */
-export async function initialSync(): Promise<{ emails: number; events: number }> {
+export async function initialSync(): Promise<{
+  emails: number;
+  events: number;
+}> {
   const corsair = await getCorsair();
 
   // Demo data out — the timeline becomes fully real from here.
@@ -20,14 +23,18 @@ export async function initialSync(): Promise<{ emails: number; events: number }>
   let eventCount = 0;
 
   // ── Gmail: latest 15 inbox messages ──────────────────────────────────
-  const list = await corsair.gmail.messages.list({
+  const list = await corsair.gmail.api.messages.list({
     userId: "me",
     labelIds: ["INBOX"],
     maxResults: 15,
   });
   for (const ref of list?.messages ?? []) {
     try {
-      const msg = await corsair.gmail.messages.get({ userId: "me", id: ref.id, format: "full" });
+      const msg = await corsair.gmail.api.messages.get({
+        userId: "me",
+        id: ref.id,
+        format: "full",
+      });
       const email = await gmailToEmail(msg);
       if (await addEmail(email)) emailCount++;
     } catch (err) {
@@ -37,7 +44,7 @@ export async function initialSync(): Promise<{ emails: number; events: number }>
 
   // ── Calendar: next 14 days ───────────────────────────────────────────
   const now = new Date();
-  const events = await corsair.googlecalendar.events.getMany({
+  const events = await corsair.googlecalendar.api.events.getMany({
     calendarId: "primary",
     timeMin: now.toISOString(),
     timeMax: new Date(now.getTime() + 14 * 86400_000).toISOString(),
@@ -59,7 +66,8 @@ export async function initialSync(): Promise<{ emails: number; events: number }>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function gmailToEmail(msg: any): Promise<Email> {
   const headers: Record<string, string> = {};
-  for (const h of msg?.payload?.headers ?? []) headers[h.name?.toLowerCase()] = h.value;
+  for (const h of msg?.payload?.headers ?? [])
+    headers[h.name?.toLowerCase()] = h.value;
 
   const subject = headers["subject"] ?? "(no subject)";
   const fromRaw = headers["from"] ?? "unknown@unknown.com";
@@ -84,7 +92,8 @@ export async function gmailToEmail(msg: any): Promise<Email> {
     archived: false,
     labels: ["inbox"],
     ...(await classifyPriority(subject, body)),
-    timeIntent: detectTimeIntent(`${subject} ${body.slice(0, 1000)}`) ?? undefined,
+    timeIntent:
+      detectTimeIntent(`${subject} ${body.slice(0, 1000)}`) ?? undefined,
   };
 }
 
@@ -104,8 +113,12 @@ function extractBody(payload: any): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function gcalToEvent(item: any): CalendarEvent | null {
-  const start = item?.start?.dateTime ?? (item?.start?.date ? `${item.start.date}T09:00:00` : null);
-  const end = item?.end?.dateTime ?? (item?.end?.date ? `${item.end.date}T10:00:00` : null);
+  const start =
+    item?.start?.dateTime ??
+    (item?.start?.date ? `${item.start.date}T09:00:00` : null);
+  const end =
+    item?.end?.dateTime ??
+    (item?.end?.date ? `${item.end.date}T10:00:00` : null);
   if (!start || !end || !item?.id) return null;
   return {
     id: item.id,

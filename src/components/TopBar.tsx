@@ -1,11 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useTempo, visibleEmails } from "@/lib/store";
 
 export function TopBar() {
   const { live, filter, setFilter, emails, setView, setPaletteOpen } =
     useTempo();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setUserEmail(d.email ?? null))
+      .catch(() => {});
+  }, []);
   const counts = {
     all: visibleEmails(emails, "all").length,
     urgent: visibleEmails(emails, "urgent").length,
@@ -80,6 +89,24 @@ export function TopBar() {
         />
         {live ? "Live · Corsair" : "Not connected"}
       </span>
+
+      {userEmail && (
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-[11px] font-semibold text-white uppercase">
+            {userEmail[0]}
+          </div>
+          <span className="text-[13px] text-zinc-400 max-w-[160px] truncate">{userEmail}</span>
+        </div>
+      )}
+
+      <form action="/api/auth/logout" method="POST">
+        <button
+          type="submit"
+          className="text-[13px] text-zinc-500 hover:text-zinc-300 px-2 py-0.5 rounded hover:bg-white/5 transition-colors"
+        >
+          Sign out
+        </button>
+      </form>
     </header>
   );
 }

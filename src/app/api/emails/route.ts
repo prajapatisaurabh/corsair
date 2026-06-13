@@ -19,10 +19,10 @@ export async function PATCH(req: NextRequest) {
       const { getCorsair } = await import("@/server/corsair");
       const corsair = await getCorsair();
       if (patch.archived) {
-        await corsair.gmail.messages.modify({ userId: "me", id, removeLabelIds: ["INBOX"] });
+        await corsair.gmail.api.messages.modify({ userId: "me", id, removeLabelIds: ["INBOX"] });
       }
       if (patch.unread === false) {
-        await corsair.gmail.messages.modify({ userId: "me", id, removeLabelIds: ["UNREAD"] });
+        await corsair.gmail.api.messages.modify({ userId: "me", id, removeLabelIds: ["UNREAD"] });
       }
     } catch (err) {
       console.error("corsair gmail.messages.modify failed", err);
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       const raw = Buffer.from(
         `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`
       ).toString("base64url");
-      await corsair.gmail.messages.send({ userId: "me", raw });
+      await corsair.gmail.api.messages.send({ userId: "me", raw });
     } catch (err) {
       console.error("corsair gmail.messages.send failed", err);
       return NextResponse.json({ error: "send failed" }, { status: 502 });

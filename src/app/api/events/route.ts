@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     try {
       const { getCorsair } = await import("@/server/corsair");
       const corsair = await getCorsair();
-      const created = await corsair.googlecalendar.events.create({
+      const created = await corsair.googlecalendar.api.events.create({
         calendarId: "primary",
         event: {
           summary: event.title,

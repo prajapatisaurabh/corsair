@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isConnected } from "@/server/corsair";
 
 const FEATURES = [
   {
@@ -23,7 +24,8 @@ const FEATURES = [
   },
 ];
 
-export default function Landing() {
+export default async function Landing() {
+  const connected = await isConnected();
   return (
     <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
       <header className="max-w-5xl mx-auto flex items-center justify-between px-6 h-16">
@@ -34,18 +36,29 @@ export default function Landing() {
           <span className="font-semibold tracking-tight text-lg">Tempo</span>
         </div>
         <nav className="flex items-center gap-3 text-sm">
-          <Link
-            href="/app"
-            className="text-zinc-400 hover:text-white px-3 py-1.5"
-          >
-            Open app
-          </Link>
-          <Link
-            href="/login"
-            className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200"
-          >
-            Sign in
-          </Link>
+          {connected ? (
+            <Link
+              href="/app"
+              className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200"
+            >
+              Open app
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/app"
+                className="text-zinc-400 hover:text-white px-3 py-1.5"
+              >
+                Open app
+              </Link>
+              <Link
+                href="/login"
+                className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200"
+              >
+                Sign in
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -67,12 +80,21 @@ export default function Landing() {
             scheduling is a keystroke, not a tab-switch.
           </p>
           <div className="mt-9 flex items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 font-semibold"
-            >
-              Connect Google →
-            </Link>
+            {connected ? (
+              <Link
+                href="/app"
+                className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 font-semibold"
+              >
+                Open inbox →
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 font-semibold"
+              >
+                Connect Google →
+              </Link>
+            )}
           </div>
           <p className="mt-4 text-[14px] text-zinc-600">
             One sign-in connects Gmail and Calendar — tokens encrypted by
