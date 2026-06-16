@@ -31,7 +31,7 @@ export default async function Landing() {
     <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
       <header className="max-w-5xl mx-auto flex items-center justify-between px-6 h-16">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
+          <div className="w-7 h-7 rounded-md bg-linear-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
             T
           </div>
           <span className="font-semibold tracking-tight text-lg">Tempo</span>
@@ -71,7 +71,7 @@ export default async function Landing() {
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
             Your inbox,
             <br />
-            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
               on your time.
             </span>
           </h1>
@@ -107,7 +107,7 @@ export default async function Landing() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-white/8 bg-white/[0.03] p-6 hover:border-violet-500/30 transition-colors"
+              className="rounded-2xl border border-white/8 bg-white/3 p-6 hover:border-violet-500/30 transition-colors"
             >
               <div className="text-2xl mb-3">{f.icon}</div>
               <h3 className="font-semibold mb-1.5">{f.title}</h3>
