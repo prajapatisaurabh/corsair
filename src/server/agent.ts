@@ -154,7 +154,7 @@ export function planOffline(command: string): AgentPlan {
   if (!actions.length) {
     return {
       reply:
-        'I couldn\'t map that to an action. Try: "Send a calendar invite to dev@corsair.dev at 9 AM next Thursday"',
+        'I couldn\'t map that to an action. Try: "Send a calendar invite to saurabhprajapati120@gmail.com at 9 AM next Thursday"',
       actions: [{ type: "unknown", summary: "No action recognized" }],
     };
   }

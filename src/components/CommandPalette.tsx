@@ -5,7 +5,7 @@ import { useTempo } from "@/lib/store";
 import { AgentPlan } from "@/lib/types";
 
 const SUGGESTIONS = [
-  "Send a calendar invite to dev@corsair.dev at 9 AM next Thursday. Send him an email too saying I look forward to our meeting.",
+  "Send a calendar invite to saurabhprajapati120@gmail.com at 9 AM next Thursday. Send him an email too saying I look forward to our meeting.",
   "Schedule a 45 min sync with piyush@teachyst.com tomorrow at 4pm",
   "Email hitesh@chaicode.com saying the demo is ready",
 ];

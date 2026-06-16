@@ -46,8 +46,8 @@ The schema (app tables + Corsair tables) is created automatically on first run.
    (E archive · S schedule · R AI-reply · H snooze), streak counter, timer.
    Inbox zero in under a minute — on your actual Gmail.
 4. **Agent palette (Corsair MCP)** — **⌘K**, then the hackathon brief's own
-   example: *"Send a calendar invite to dev@corsair.dev at 9 AM next
-   Thursday. Send him an email too saying I look forward to our meeting."*
+   example: *"Send a calendar invite to saurabhprajapati120@gmail.com at 9 AM
+   next Thursday. Send him an email too saying I look forward to our meeting."*
    The agent previews both actions; **Enter** executes them for real.
 5. **Realtime** — new mail lands in the timeline over SSE via the Corsair
    webhook receiver, pre-classified with time-intent parsed. No polling.

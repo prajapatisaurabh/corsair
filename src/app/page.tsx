@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: "✦",
     title: "Agent palette",
-    desc: "⌘K and tell it what to do: “invite dev@corsair.dev Thursday 9am and email him too.” Preview, press Enter, done.",
+    desc: "⌘K and tell it what to do: “invite saurabhprajapati120@gmail.com Thursday 9am and email him too.” Preview, press Enter, done.",
   },
   {
     icon: "📡",
