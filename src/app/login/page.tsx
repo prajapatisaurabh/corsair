@@ -69,6 +69,18 @@ export default function Login() {
             Your Google tokens are envelope-encrypted and stored by Corsair in
             Postgres — they never touch the browser or the agent.
           </p>
+
+          <p className="mt-4 text-center text-[13px] text-zinc-600">
+            By continuing you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-zinc-400">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline hover:text-zinc-400">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       </main>
     </div>
