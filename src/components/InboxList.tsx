@@ -171,7 +171,7 @@ function EmailRow({
           {email.timeIntent && !email.scheduledEventId && (
             <span className="shrink-0 flex items-center gap-1 text-[12px] px-1.5 py-px rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25">
               ⏰ {email.timeIntent.phrase}
-              <kbd className="!bg-amber-500/20 !border-amber-500/30 !text-amber-200">
+              <kbd className="bg-amber-500/20! border-amber-500/30! text-amber-200!">
                 S
               </kbd>
             </span>

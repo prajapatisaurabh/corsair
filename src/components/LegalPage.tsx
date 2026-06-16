@@ -13,7 +13,7 @@ export function LegalPage({
     <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
       <header className="max-w-3xl mx-auto flex items-center px-6 h-16">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
+          <div className="w-7 h-7 rounded-md bg-linear-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
             T
           </div>
           <span className="font-semibold tracking-tight text-lg">Tempo</span>

@@ -28,7 +28,7 @@ export function TopBar() {
         title="Back to home"
         className="flex items-center gap-2 rounded-md px-1 -mx-1 hover:bg-white/5"
       >
-        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-[15px] font-bold text-white">
+        <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-[15px] font-bold text-white">
           T
         </div>
         <span className="font-semibold tracking-tight text-[17px]">Tempo</span>
