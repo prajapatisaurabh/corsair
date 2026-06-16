@@ -1,20 +1,16 @@
 import { NextResponse } from "next/server";
-import { getPool, ready } from "@/server/db";
-import { resetCorsair } from "@/server/corsair";
+import { deleteUserData } from "@/server/db";
+import { getUserId, clearUserId } from "@/server/session";
 
 export async function POST() {
-  await ready();
-  const pool = getPool();
-
-  // Clear user session data. Keep corsair_integrations (OAuth app config) so
-  // re-login doesn't need to re-provision. Only delete account rows (user tokens).
-  await pool.query(
-    "DELETE FROM app_settings WHERE key IN ('google_connected', 'user_email', 'user_picture')",
-  );
-  await pool.query("DELETE FROM corsair_accounts");
-
-  // Reset the in-memory singleton so getCorsair() re-provisions cleanly on next login.
-  resetCorsair();
+  // Remove only the current user's data (emails, events, Corsair account
+  // tokens, profile) — never touch other tenants. Integration-level OAuth
+  // config (corsair_integrations) stays so the next login skips re-provisioning.
+  const userId = await getUserId();
+  if (userId) {
+    await deleteUserData(userId);
+  }
+  await clearUserId();
 
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   return NextResponse.redirect(`${appUrl}/login`, { status: 303 });

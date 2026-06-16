@@ -20,8 +20,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const corsair = await getCorsair();
-    const { processOAuthCallback, generateOAuthUrl } = await import("corsair/oauth");
-    const { plugin } = await processOAuthCallback(corsair, {
+    const { processOAuthCallback, generateOAuthUrl } =
+      await import("corsair/oauth");
+    // tenantId is recovered from the signed OAuth state — the authoritative
+    // user the tokens were just stored under.
+    const { plugin, tenantId } = await processOAuthCallback(corsair, {
       code,
       state,
       redirectUri: redirectUri(),
@@ -30,17 +33,19 @@ export async function GET(req: NextRequest) {
     if (plugin === "gmail") {
       // Same account, second scope set — Google auto-approves in one click.
       const { url } = await generateOAuthUrl(corsair, "googlecalendar", {
-        tenantId: "default",
+        tenantId,
         redirectUri: redirectUri(),
       });
       return NextResponse.redirect(url);
     }
 
-    // Both plugins connected → swap demo data for the real inbox/calendar.
-    await markConnected();
+    // Both plugins connected → backfill this user's real inbox/calendar.
+    await markConnected(tenantId);
     try {
-      const counts = await initialSync();
-      console.log(`initial sync: ${counts.emails} emails, ${counts.events} events`);
+      const counts = await initialSync(tenantId);
+      console.log(
+        `initial sync: ${counts.emails} emails, ${counts.events} events`,
+      );
     } catch (err) {
       console.error("initial sync failed (app still usable)", err);
     }

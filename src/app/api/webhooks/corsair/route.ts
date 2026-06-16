@@ -11,13 +11,18 @@ import { Email } from "@/lib/types";
  * out to connected clients over the SSE stream.
  */
 export async function POST(req: NextRequest) {
-  if (!(await isConnected())) return NextResponse.json({ ok: true, mode: "demo" });
+  // Corsair routes webhooks per tenant via ?tenantId=<userId> in the URL.
+  const tenantId = req.nextUrl.searchParams.get("tenantId");
+  if (!tenantId || !(await isConnected(tenantId))) {
+    return NextResponse.json({ ok: true, mode: "demo" });
+  }
 
   const payload = await req.json();
   try {
     const msg = payload?.data ?? payload;
     const headers: Record<string, string> = {};
-    for (const h of msg?.payload?.headers ?? []) headers[h.name?.toLowerCase()] = h.value;
+    for (const h of msg?.payload?.headers ?? [])
+      headers[h.name?.toLowerCase()] = h.value;
 
     const subject = headers["subject"] ?? "(no subject)";
     const fromRaw = headers["from"] ?? "unknown@unknown.com";
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
       ...(await classifyPriority(subject, body)),
       timeIntent: detectTimeIntent(`${subject} ${body}`) ?? undefined,
     };
-    await addEmail(email);
+    await addEmail(tenantId, email);
   } catch (err) {
     console.error("webhook parse failed", err);
   }

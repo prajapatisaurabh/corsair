@@ -1,23 +1,26 @@
 import "server-only";
 import { Email, CalendarEvent } from "@/lib/types";
-import { getCorsair } from "./corsair";
+import { getTenant } from "./corsair";
 import { getPool } from "./db";
 import { addEmail, addEvent, broadcast } from "./store";
 import { classifyPriority } from "./classify";
 import { detectTimeIntent } from "./time-intent";
 
 /**
- * Initial backfill after Google connect: replace demo data with the user's
- * real inbox (latest messages) and upcoming calendar events.
+ * Initial backfill after Google connect: pull this user's real inbox (latest
+ * messages) and upcoming calendar events. Everything is scoped to userId so
+ * one user's sync never touches another user's data.
  */
-export async function initialSync(): Promise<{
+export async function initialSync(userId: string): Promise<{
   emails: number;
   events: number;
 }> {
-  const corsair = await getCorsair();
+  const corsair = await getTenant(userId);
 
-  // Demo data out — the timeline becomes fully real from here.
-  await getPool().query("TRUNCATE emails, events");
+  // Clear only THIS user's rows before re-backfilling (never TRUNCATE — that
+  // would wipe every tenant's data).
+  await getPool().query("DELETE FROM emails WHERE tenant_id = $1", [userId]);
+  await getPool().query("DELETE FROM events WHERE tenant_id = $1", [userId]);
 
   let emailCount = 0;
   let eventCount = 0;
@@ -36,7 +39,7 @@ export async function initialSync(): Promise<{
         format: "full",
       });
       const email = await gmailToEmail(msg);
-      if (await addEmail(email)) emailCount++;
+      if (await addEmail(userId, email)) emailCount++;
     } catch (err) {
       console.error("sync: failed to import message", ref.id, err);
     }
@@ -54,10 +57,10 @@ export async function initialSync(): Promise<{
   });
   for (const item of events?.items ?? []) {
     const ev = gcalToEvent(item);
-    if (ev && (await addEvent(ev))) eventCount++;
+    if (ev && (await addEvent(userId, ev))) eventCount++;
   }
 
-  broadcast("sync.done", { emails: emailCount, events: eventCount });
+  broadcast(userId, "sync.done", { emails: emailCount, events: eventCount });
   return { emails: emailCount, events: eventCount };
 }
 

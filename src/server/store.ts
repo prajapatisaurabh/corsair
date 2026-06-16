@@ -1,14 +1,25 @@
 import "server-only";
 import { Email, CalendarEvent } from "@/lib/types";
-import { getPool, ready, rowToEmail, rowToEvent, insertEmail, insertEvent } from "./db";
+import {
+  getPool,
+  ready,
+  rowToEmail,
+  rowToEvent,
+  insertEmail,
+  insertEvent,
+} from "./db";
 
 /**
- * Postgres-backed store. Reads/writes go to the database; the SSE listener
- * set stays in-process (kept on globalThis across HMR) so writes fan out
- * to connected browsers immediately.
+ * Postgres-backed store. Every read/write is scoped to a userId (the Corsair
+ * tenant). The SSE listener set stays in-process (kept on globalThis across
+ * HMR); broadcasts are tagged with a userId so a write only fans out to that
+ * user's connected browsers — never another user's.
  */
 
-type Listener = (event: { type: string; payload: unknown }) => void;
+type Listener = {
+  userId: string;
+  send: (event: { type: string; payload: unknown }) => void;
+};
 
 const g = globalThis as unknown as { __tempoListeners?: Set<Listener> };
 
@@ -17,40 +28,60 @@ export function getListeners(): Set<Listener> {
   return g.__tempoListeners;
 }
 
-export function broadcast(type: string, payload: unknown) {
-  for (const fn of getListeners()) {
+export function addListener(listener: Listener) {
+  getListeners().add(listener);
+}
+
+export function removeListener(listener: Listener) {
+  getListeners().delete(listener);
+}
+
+/** Fan out an event only to streams belonging to `userId`. */
+export function broadcast(userId: string, type: string, payload: unknown) {
+  for (const l of getListeners()) {
+    if (l.userId !== userId) continue;
     try {
-      fn({ type, payload });
+      l.send({ type, payload });
     } catch {
       // listener already disconnected
     }
   }
 }
 
-export async function getEmails(): Promise<Email[]> {
+export async function getEmails(userId: string): Promise<Email[]> {
   await ready();
-  const { rows } = await getPool().query("SELECT * FROM emails ORDER BY received_at DESC");
+  const { rows } = await getPool().query(
+    "SELECT * FROM emails WHERE tenant_id = $1 ORDER BY received_at DESC",
+    [userId],
+  );
   return rows.map(rowToEmail);
 }
 
-export async function getEvents(): Promise<CalendarEvent[]> {
+export async function getEvents(userId: string): Promise<CalendarEvent[]> {
   await ready();
-  const { rows } = await getPool().query("SELECT * FROM events ORDER BY start_at");
+  const { rows } = await getPool().query(
+    "SELECT * FROM events WHERE tenant_id = $1 ORDER BY start_at",
+    [userId],
+  );
   return rows.map(rowToEvent);
 }
 
 /** Inserts and broadcasts. Returns false if the id already existed. */
-export async function addEmail(email: Email): Promise<boolean> {
+export async function addEmail(userId: string, email: Email): Promise<boolean> {
   await ready();
-  const inserted = await insertEmail(email);
-  if (inserted) broadcast("email.new", email);
+  const inserted = await insertEmail(userId, email);
+  if (inserted) broadcast(userId, "email.new", email);
   return inserted;
 }
 
-export async function updateEmail(id: string, patch: Partial<Email>): Promise<Email | undefined> {
+export async function updateEmail(
+  userId: string,
+  id: string,
+  patch: Partial<Email>,
+): Promise<Email | undefined> {
   await ready();
   const sets: string[] = [];
-  const vals: unknown[] = [id];
+  const vals: unknown[] = [id, userId];
   const map: Partial<Record<keyof Email, string>> = {
     unread: "unread",
     archived: "archived",
@@ -67,24 +98,30 @@ export async function updateEmail(id: string, patch: Partial<Email>): Promise<Em
   }
   if (!sets.length) return undefined;
   const { rows } = await getPool().query(
-    `UPDATE emails SET ${sets.join(", ")} WHERE id = $1 RETURNING *`,
-    vals
+    `UPDATE emails SET ${sets.join(", ")} WHERE id = $1 AND tenant_id = $2 RETURNING *`,
+    vals,
   );
   if (!rows[0]) return undefined;
   const email = rowToEmail(rows[0]);
-  broadcast("email.updated", email);
+  broadcast(userId, "email.updated", email);
   return email;
 }
 
-export async function addEvent(event: CalendarEvent): Promise<boolean> {
+export async function addEvent(
+  userId: string,
+  event: CalendarEvent,
+): Promise<boolean> {
   await ready();
-  const inserted = await insertEvent(event);
-  if (inserted) broadcast("event.new", event);
+  const inserted = await insertEvent(userId, event);
+  if (inserted) broadcast(userId, "event.new", event);
   return inserted;
 }
 
-export async function hasEmail(id: string): Promise<boolean> {
+export async function hasEmail(userId: string, id: string): Promise<boolean> {
   await ready();
-  const { rows } = await getPool().query("SELECT 1 FROM emails WHERE id = $1", [id]);
+  const { rows } = await getPool().query(
+    "SELECT 1 FROM emails WHERE id = $1 AND tenant_id = $2",
+    [id, userId],
+  );
   return rows.length > 0;
 }

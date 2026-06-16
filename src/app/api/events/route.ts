@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEvents, addEvent, updateEmail } from "@/server/store";
 import { isConnected } from "@/server/corsair";
+import { getUserId } from "@/server/session";
 import { CalendarEvent } from "@/lib/types";
 
 export async function GET() {
-  const events = await getEvents();
-  return NextResponse.json({ events, live: await isConnected() });
+  const userId = await getUserId();
+  if (!userId) return NextResponse.json({ events: [], live: false });
+  const events = await getEvents(userId);
+  return NextResponse.json({ events, live: await isConnected(userId) });
 }
 
 // POST /api/events — create event { title, start, end, attendees, sourceEmailId? }
 export async function POST(req: NextRequest) {
+  const userId = await getUserId();
+  if (!userId)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const event: CalendarEvent = {
     id: `ev-${Date.now()}`,
@@ -22,10 +29,10 @@ export async function POST(req: NextRequest) {
     color: body.sourceEmailId ? "amber" : "violet",
   };
 
-  if (await isConnected()) {
+  if (await isConnected(userId)) {
     try {
-      const { getCorsair } = await import("@/server/corsair");
-      const corsair = await getCorsair();
+      const { getTenant } = await import("@/server/corsair");
+      const corsair = await getTenant(userId);
       const created = await corsair.googlecalendar.api.events.create({
         calendarId: "primary",
         event: {
@@ -43,9 +50,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  await addEvent(event);
+  await addEvent(userId, event);
   if (event.sourceEmailId) {
-    await updateEmail(event.sourceEmailId, { scheduledEventId: event.id, archived: true });
+    await updateEmail(userId, event.sourceEmailId, {
+      scheduledEventId: event.id,
+      archived: true,
+    });
   }
   return NextResponse.json({ event });
 }

@@ -17,7 +17,8 @@ export function getPool(): Pool {
   if (!g.__tempoPool) {
     g.__tempoPool = new Pool({
       connectionString:
-        process.env.DATABASE_URL ?? "postgres://tempo:tempo@localhost:5432/tempo",
+        process.env.DATABASE_URL ??
+        "postgres://tempo:tempo@localhost:5432/tempo",
       max: 10,
     });
   }
@@ -35,6 +36,7 @@ async function init() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS emails (
       id                 text PRIMARY KEY,
+      tenant_id          text NOT NULL,
       thread_id          text NOT NULL,
       from_name          text NOT NULL,
       from_email         text NOT NULL,
@@ -55,6 +57,7 @@ async function init() {
 
     CREATE TABLE IF NOT EXISTS events (
       id              text PRIMARY KEY,
+      tenant_id       text NOT NULL,
       title           text NOT NULL,
       start_at        timestamptz NOT NULL,
       end_at          timestamptz NOT NULL,
@@ -64,8 +67,17 @@ async function init() {
       color           text
     );
 
-    CREATE INDEX IF NOT EXISTS emails_received_idx ON emails (received_at DESC);
-    CREATE INDEX IF NOT EXISTS events_start_idx ON events (start_at);
+    CREATE INDEX IF NOT EXISTS emails_received_idx ON emails (tenant_id, received_at DESC);
+    CREATE INDEX IF NOT EXISTS events_start_idx ON events (tenant_id, start_at);
+
+    -- Per-user record. id == the session/tenant id (see server/session.ts).
+    CREATE TABLE IF NOT EXISTS users (
+      id         text PRIMARY KEY,
+      email      text,
+      picture    text,
+      connected  boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
 
     CREATE TABLE IF NOT EXISTS app_settings (
       key   text PRIMARY KEY,
@@ -113,20 +125,72 @@ async function init() {
       status     TEXT
     );
   `);
+
+  // Migration for databases created before multi-tenancy: add the tenant_id
+  // column and purge any pre-tenancy rows (they belonged to no user and were
+  // visible to everyone — exactly the leak we're closing).
+  await pool.query(`
+    ALTER TABLE emails ADD COLUMN IF NOT EXISTS tenant_id text;
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS tenant_id text;
+    DELETE FROM emails WHERE tenant_id IS NULL;
+    DELETE FROM events WHERE tenant_id IS NULL;
+  `);
 }
 
-export async function getSetting(key: string): Promise<string | null> {
+// ── per-user state (replaces the old global app_settings keys) ───────────
+
+export async function isUserConnected(userId: string): Promise<boolean> {
   await ready();
-  const { rows } = await getPool().query("SELECT value FROM app_settings WHERE key = $1", [key]);
-  return rows[0]?.value ?? null;
+  const { rows } = await getPool().query(
+    "SELECT connected FROM users WHERE id = $1",
+    [userId],
+  );
+  return rows[0]?.connected === true;
 }
 
-export async function setSetting(key: string, value: string): Promise<void> {
+export async function markUserConnected(userId: string): Promise<void> {
   await ready();
   await getPool().query(
-    "INSERT INTO app_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2",
-    [key, value]
+    `INSERT INTO users (id, connected) VALUES ($1, true)
+     ON CONFLICT (id) DO UPDATE SET connected = true`,
+    [userId],
   );
+}
+
+export async function getUserProfile(
+  userId: string,
+): Promise<{ email: string | null; picture: string | null }> {
+  await ready();
+  const { rows } = await getPool().query(
+    "SELECT email, picture FROM users WHERE id = $1",
+    [userId],
+  );
+  return { email: rows[0]?.email ?? null, picture: rows[0]?.picture ?? null };
+}
+
+export async function setUserProfile(
+  userId: string,
+  email: string | null,
+  picture: string | null,
+): Promise<void> {
+  await ready();
+  await getPool().query(
+    `INSERT INTO users (id, email, picture) VALUES ($1, $2, $3)
+     ON CONFLICT (id) DO UPDATE SET email = $2, picture = $3`,
+    [userId, email, picture],
+  );
+}
+
+/** Removes all of a user's app data (used on logout). */
+export async function deleteUserData(userId: string): Promise<void> {
+  await ready();
+  const pool = getPool();
+  await pool.query("DELETE FROM emails WHERE tenant_id = $1", [userId]);
+  await pool.query("DELETE FROM events WHERE tenant_id = $1", [userId]);
+  await pool.query("DELETE FROM users WHERE id = $1", [userId]);
+  await pool.query("DELETE FROM corsair_accounts WHERE tenant_id = $1", [
+    userId,
+  ]);
 }
 
 // ── row mapping ────────────────────────────────────────────────────────
@@ -167,33 +231,56 @@ export function rowToEvent(r: any): CalendarEvent {
   };
 }
 
-export async function insertEmail(e: Email): Promise<boolean> {
+export async function insertEmail(userId: string, e: Email): Promise<boolean> {
   const res = await getPool().query(
-    `INSERT INTO emails (id, thread_id, from_name, from_email, to_emails, subject,
+    `INSERT INTO emails (id, tenant_id, thread_id, from_name, from_email, to_emails, subject,
        snippet, body, received_at, unread, archived, snoozed_until, priority,
        priority_reason, time_intent, scheduled_event_id, labels)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      ON CONFLICT (id) DO NOTHING`,
     [
-      e.id, e.threadId, e.from.name, e.from.email, e.to, e.subject,
-      e.snippet, e.body, e.receivedAt, e.unread, e.archived,
-      e.snoozedUntil ?? null, e.priority, e.priorityReason ?? null,
+      e.id,
+      userId,
+      e.threadId,
+      e.from.name,
+      e.from.email,
+      e.to,
+      e.subject,
+      e.snippet,
+      e.body,
+      e.receivedAt,
+      e.unread,
+      e.archived,
+      e.snoozedUntil ?? null,
+      e.priority,
+      e.priorityReason ?? null,
       e.timeIntent ? JSON.stringify(e.timeIntent) : null,
-      e.scheduledEventId ?? null, e.labels,
-    ]
+      e.scheduledEventId ?? null,
+      e.labels,
+    ],
   );
   return (res.rowCount ?? 0) > 0;
 }
 
-export async function insertEvent(ev: CalendarEvent): Promise<boolean> {
+export async function insertEvent(
+  userId: string,
+  ev: CalendarEvent,
+): Promise<boolean> {
   const res = await getPool().query(
-    `INSERT INTO events (id, title, start_at, end_at, attendees, location, source_email_id, color)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    `INSERT INTO events (id, tenant_id, title, start_at, end_at, attendees, location, source_email_id, color)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
      ON CONFLICT (id) DO NOTHING`,
     [
-      ev.id, ev.title, ev.start, ev.end, ev.attendees,
-      ev.location ?? null, ev.sourceEmailId ?? null, ev.color ?? null,
-    ]
+      ev.id,
+      userId,
+      ev.title,
+      ev.start,
+      ev.end,
+      ev.attendees,
+      ev.location ?? null,
+      ev.sourceEmailId ?? null,
+      ev.color ?? null,
+    ],
   );
   return (res.rowCount ?? 0) > 0;
 }

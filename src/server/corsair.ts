@@ -1,5 +1,5 @@
 import "server-only";
-import { getPool, ready, getSetting, setSetting } from "./db";
+import { getPool, ready, isUserConnected, markUserConnected } from "./db";
 
 /**
  * Corsair client. Shares the app's Postgres pool — Corsair's tables
@@ -25,14 +25,25 @@ export function oauthConfigured(): boolean {
   );
 }
 
-/** A Google account has completed the connect flow → operate on real data. */
-export async function isConnected(): Promise<boolean> {
-  if (!oauthConfigured()) return false;
-  return (await getSetting("google_connected")) === "true";
+/** This user has completed the connect flow → operate on their real data. */
+export async function isConnected(userId: string | null): Promise<boolean> {
+  if (!userId || !oauthConfigured()) return false;
+  return isUserConnected(userId);
 }
 
-export async function markConnected(): Promise<void> {
-  await setSetting("google_connected", "true");
+export async function markConnected(userId: string): Promise<void> {
+  await markUserConnected(userId);
+}
+
+/**
+ * Tenant-scoped Corsair client. Every Gmail/Calendar API call and token read
+ * MUST go through this — withTenant(userId) isolates one user's credentials
+ * and data from every other user's.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getTenant(userId: string): Promise<any> {
+  const corsair = await getCorsair();
+  return corsair.withTenant(userId);
 }
 
 export async function getCorsair() {
@@ -52,12 +63,13 @@ export async function getCorsair() {
       plugins: [gmail(), googlecalendar()],
       database: getPool(),
       kek: process.env.CORSAIR_KEK!,
-      multiTenancy: false,
+      multiTenancy: true,
     });
   }
 
-  // One-time provisioning per process: integration/account rows + DEKs,
-  // then register the Google OAuth client (stored encrypted, idempotent).
+  // One-time provisioning per process: integration-level only (shared OAuth
+  // client_id/secret, stored encrypted, idempotent). Per-tenant account rows
+  // are created on demand during the OAuth callback (processOAuthCallback).
   if (!provisioned && oauthConfigured()) {
     const { setupCorsair } = await import("corsair/setup");
     await setupCorsair(corsairInstance);

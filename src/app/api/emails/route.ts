@@ -1,28 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEmails, updateEmail, broadcast } from "@/server/store";
 import { isConnected } from "@/server/corsair";
+import { getUserId } from "@/server/session";
 
 export async function GET() {
-  const emails = await getEmails();
-  return NextResponse.json({ emails, live: await isConnected() });
+  const userId = await getUserId();
+  if (!userId) return NextResponse.json({ emails: [], live: false });
+  const emails = await getEmails(userId);
+  return NextResponse.json({ emails, live: await isConnected(userId) });
 }
 
 // PATCH /api/emails — { id, ...patch } for archive / snooze / read state
 export async function PATCH(req: NextRequest) {
+  const userId = await getUserId();
+  if (!userId)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const { id, ...patch } = await req.json();
-  const email = await updateEmail(id, patch);
+  const email = await updateEmail(userId, id, patch);
   if (!email) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  if (await isConnected()) {
+  if (await isConnected(userId)) {
     // Mirror the change to Gmail via Corsair (archive => remove INBOX label).
     try {
-      const { getCorsair } = await import("@/server/corsair");
-      const corsair = await getCorsair();
+      const { getTenant } = await import("@/server/corsair");
+      const corsair = await getTenant(userId);
       if (patch.archived) {
-        await corsair.gmail.api.messages.modify({ userId: "me", id, removeLabelIds: ["INBOX"] });
+        await corsair.gmail.api.messages.modify({
+          userId: "me",
+          id,
+          removeLabelIds: ["INBOX"],
+        });
       }
       if (patch.unread === false) {
-        await corsair.gmail.api.messages.modify({ userId: "me", id, removeLabelIds: ["UNREAD"] });
+        await corsair.gmail.api.messages.modify({
+          userId: "me",
+          id,
+          removeLabelIds: ["UNREAD"],
+        });
       }
     } catch (err) {
       console.error("corsair gmail.messages.modify failed", err);
@@ -33,14 +48,18 @@ export async function PATCH(req: NextRequest) {
 
 // POST /api/emails — send an email { to, subject, body }
 export async function POST(req: NextRequest) {
+  const userId = await getUserId();
+  if (!userId)
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const { to, subject, body } = await req.json();
 
-  if (await isConnected()) {
+  if (await isConnected(userId)) {
     try {
-      const { getCorsair } = await import("@/server/corsair");
-      const corsair = await getCorsair();
+      const { getTenant } = await import("@/server/corsair");
+      const corsair = await getTenant(userId);
       const raw = Buffer.from(
-        `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`
+        `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
       ).toString("base64url");
       await corsair.gmail.api.messages.send({ userId: "me", raw });
     } catch (err) {
@@ -49,6 +68,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  broadcast("email.sent", { to, subject });
+  broadcast(userId, "email.sent", { to, subject });
   return NextResponse.json({ ok: true, sent: { to, subject, body } });
 }

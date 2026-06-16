@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { isConnected } from "@/server/corsair";
+import { getUserId } from "@/server/session";
 
 const FEATURES = [
   {
@@ -25,7 +26,7 @@ const FEATURES = [
 ];
 
 export default async function Landing() {
-  const connected = await isConnected();
+  const connected = await isConnected(await getUserId());
   return (
     <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
       <header className="max-w-5xl mx-auto flex items-center justify-between px-6 h-16">
@@ -117,8 +118,19 @@ export default async function Landing() {
       </main>
 
       <footer className="border-t border-white/8 py-6 text-center text-[14px] text-zinc-600">
-        Tempo · powered by Corsair · Builder Mode On | MacBook Giveaway
-        Hackathon
+        <div>
+          Tempo · powered by Corsair · Builder Mode On | MacBook Giveaway
+          Hackathon
+        </div>
+        <div className="mt-2">
+          <Link href="/privacy" className="hover:text-zinc-400">
+            Privacy Policy
+          </Link>
+          <span className="mx-2">·</span>
+          <Link href="/terms" className="hover:text-zinc-400">
+            Terms of Service
+          </Link>
+        </div>
       </footer>
     </div>
   );
