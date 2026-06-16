@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   title: "Tempo — email that thinks in time",
   description:
     "A Superhuman-style email + calendar client powered by Corsair. Built for the Corsair Hackathon.",
+  // Google Search Console site verification. Set GOOGLE_SITE_VERIFICATION to the
+  // token Google gives you (the `content` value of the meta tag). Emits
+  // <meta name="google-site-verification" content="..." /> in <head>.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({
