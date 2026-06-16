@@ -77,6 +77,7 @@ async function init() {
     CREATE TABLE IF NOT EXISTS users (
       id         text PRIMARY KEY,
       email      text,
+      name       text,
       picture    text,
       connected  boolean NOT NULL DEFAULT false,
       created_at timestamptz NOT NULL DEFAULT now()
@@ -135,6 +136,7 @@ async function init() {
   await pool.query(`
     ALTER TABLE emails ADD COLUMN IF NOT EXISTS tenant_id text;
     ALTER TABLE events ADD COLUMN IF NOT EXISTS tenant_id text;
+    ALTER TABLE users  ADD COLUMN IF NOT EXISTS name text;
     DELETE FROM emails WHERE tenant_id IS NULL;
     DELETE FROM events WHERE tenant_id IS NULL;
   `);
@@ -162,25 +164,30 @@ export async function markUserConnected(userId: string): Promise<void> {
 
 export async function getUserProfile(
   userId: string,
-): Promise<{ email: string | null; picture: string | null }> {
+): Promise<{ email: string | null; name: string | null; picture: string | null }> {
   await ready();
   const { rows } = await getPool().query(
-    "SELECT email, picture FROM users WHERE id = $1",
+    "SELECT email, name, picture FROM users WHERE id = $1",
     [userId],
   );
-  return { email: rows[0]?.email ?? null, picture: rows[0]?.picture ?? null };
+  return {
+    email: rows[0]?.email ?? null,
+    name: rows[0]?.name ?? null,
+    picture: rows[0]?.picture ?? null,
+  };
 }
 
 export async function setUserProfile(
   userId: string,
   email: string | null,
   picture: string | null,
+  name: string | null = null,
 ): Promise<void> {
   await ready();
   await getPool().query(
-    `INSERT INTO users (id, email, picture) VALUES ($1, $2, $3)
-     ON CONFLICT (id) DO UPDATE SET email = $2, picture = $3`,
-    [userId, email, picture],
+    `INSERT INTO users (id, email, picture, name) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO UPDATE SET email = $2, picture = $3, name = $4`,
+    [userId, email, picture, name],
   );
 }
 

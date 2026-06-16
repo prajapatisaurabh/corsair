@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-type UserData = { connected: boolean; email: string | null; picture: string | null };
+type UserData = {
+  connected: boolean;
+  email: string | null;
+  name: string | null;
+  picture: string | null;
+};
 
 export function UserMenu() {
   const [data, setData] = useState<UserData | null>(null);
@@ -28,7 +33,7 @@ export function UserMenu() {
 
   if (!data) return null;
 
-  const initial = data.email ? data.email[0].toUpperCase() : "G";
+  const initial = (data.name || data.email || "G")[0].toUpperCase();
 
   const Avatar = ({ size }: { size: number }) => (
     data.picture ? (
@@ -56,9 +61,16 @@ export function UserMenu() {
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
               <Avatar size={32} />
             </div>
-            <span className="text-[13px] text-zinc-300 truncate">
-              {data.email ?? "Connected"}
-            </span>
+            <div className="min-w-0">
+              {data.name && (
+                <div className="text-[13px] font-medium text-zinc-100 truncate">
+                  {data.name}
+                </div>
+              )}
+              <div className="text-[12px] text-zinc-400 truncate">
+                {data.email ?? "Connected"}
+              </div>
+            </div>
           </div>
 
           <form action="/api/auth/logout" method="POST">
