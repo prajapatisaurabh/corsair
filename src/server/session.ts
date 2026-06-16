@@ -7,7 +7,8 @@ import { randomUUID } from "node:crypto";
  * doubles as the Corsair tenant id — every Google token, synced email/event,
  * and API call is scoped to this value so users never see each other's data.
  */
-const COOKIE = "tempo_uid";
+export const SESSION_COOKIE = "tempo_uid";
+const COOKIE = SESSION_COOKIE;
 const MAX_AGE = 60 * 60 * 24 * 90; // 90 days
 
 /** Current user id, or null if the visitor has no session yet. */

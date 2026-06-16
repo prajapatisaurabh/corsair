@@ -11,26 +11,28 @@ A Superhuman-style Gmail + Google Calendar client built for the **Corsair Hackat
 
 ```bash
 npm install
-docker compose up -d postgres   # Postgres 16 on :5432
-cp .env.example .env            # DATABASE_URL is pre-filled
+cp .env.example .env            # set DATABASE_URL to your Neon connection string
 npm run dev
 ```
 
-Open http://localhost:3456, hit **Sign in → Continue with Google** and the
-app backfills your real inbox (latest messages, AI-classified) and the next
-two weeks of your calendar. Schema is created in Postgres automatically.
+Use a [Neon](https://neon.tech) Postgres database (or any Postgres) and put its
+connection string in `DATABASE_URL`. Open http://localhost:3456, hit
+**Sign in → Continue with Google** and the app backfills your real inbox
+(latest messages, AI-classified) and the next two weeks of your calendar.
+Schema is created automatically on first connection.
 
-## Deploy (VPS with Docker)
+## Deploy (Vercel + Neon)
 
-```bash
-git clone <repo> && cd <repo>
-export POSTGRES_PASSWORD=<strong-password>
-docker compose --profile prod up -d --build
-```
+Deploy on [Vercel](https://vercel.com) with a [Neon](https://neon.tech)
+Postgres database. In the Vercel project's environment variables set:
 
-That starts Postgres + the app (multi-stage standalone build) on port 3456.
-Put nginx/Caddy with TLS in front and set `CORSAIR_KEK` /
-`ANTHROPIC_API_KEY` in the environment to go fully live.
+- `DATABASE_URL` — Neon connection string
+- `APP_URL` — your public URL (e.g. `https://www.corsair.work`)
+- `CORSAIR_KEK` — `openssl rand -base64 32`
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth client
+- `OPENAI_API_KEY` (or `ANTHROPIC_API_KEY`) — optional, for the agent
+
+The schema (app tables + Corsair tables) is created automatically on first run.
 
 ## The demo script (≈3 minutes)
 
@@ -76,7 +78,7 @@ Put nginx/Caddy with TLS in front and set `CORSAIR_KEK` /
 
 ## Database
 
-Everything runs on **Postgres 16** (Docker). One database, two owners:
+Everything runs on **Postgres** (Neon). One database, two owners:
 
 - **App tables** (`emails`, `events`) — created/seeded automatically by
   `src/server/db.ts`; all inbox/calendar state survives restarts.

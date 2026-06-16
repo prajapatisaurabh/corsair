@@ -15,10 +15,13 @@ const g = globalThis as unknown as {
 
 export function getPool(): Pool {
   if (!g.__tempoPool) {
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "DATABASE_URL is not set — provide your Neon (or other Postgres) connection string.",
+      );
+    }
     g.__tempoPool = new Pool({
-      connectionString:
-        process.env.DATABASE_URL ??
-        "postgres://tempo:tempo@localhost:5432/tempo",
+      connectionString: process.env.DATABASE_URL,
       max: 10,
     });
   }
