@@ -11,6 +11,11 @@ import { getPool, ready, getSetting, setSetting } from "./db";
 let corsairInstance: any = null;
 let provisioned = false;
 
+export function resetCorsair() {
+  corsairInstance = null;
+  provisioned = false;
+}
+
 /** Server has everything needed to run the Google OAuth flow. */
 export function oauthConfigured(): boolean {
   return Boolean(

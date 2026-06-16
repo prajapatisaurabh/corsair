@@ -1,9 +1,73 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTempo, visibleEmails } from "@/lib/store";
 import { relativeTime } from "@/lib/time";
 import { Email, Priority } from "@/lib/types";
+
+function EmptyState() {
+  const { live, emails, toast } = useTempo();
+  const [syncing, setSyncing] = useState(false);
+
+  const hasEmails = emails.length > 0;
+
+  const triggerSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/sync", { method: "POST" });
+      if (res.ok) {
+        const { emails: count } = await res.json();
+        toast(`Synced ${count} emails`, "success");
+        useTempo.getState().load();
+      } else {
+        const { error } = await res.json();
+        toast(error ?? "Sync failed", "error");
+      }
+    } catch {
+      toast("Could not reach server", "error");
+    }
+    setSyncing(false);
+  };
+
+  if (hasEmails) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">
+        <div className="text-4xl">🎉</div>
+        <div className="text-sm">Inbox zero. Go build something.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
+      <div className="text-4xl">📭</div>
+      <div>
+        <p className="text-zinc-300 font-medium">No emails loaded yet</p>
+        <p className="text-zinc-500 text-sm mt-1">
+          {live
+            ? "Your Gmail is connected. Click below to pull your inbox."
+            : "Connect your Google account to get started."}
+        </p>
+      </div>
+      {live ? (
+        <button
+          onClick={triggerSync}
+          disabled={syncing}
+          className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-sm font-medium transition-colors"
+        >
+          {syncing ? "Syncing…" : "Sync inbox now"}
+        </button>
+      ) : (
+        <a
+          href="/login"
+          className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium transition-colors"
+        >
+          Connect Google →
+        </a>
+      )}
+    </div>
+  );
+}
 
 const PRIORITY_META: Record<
   Priority,
@@ -25,12 +89,7 @@ export function InboxList() {
     .filter((g) => g.items.length > 0);
 
   if (!list.length) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-2">
-        <div className="text-4xl">🎉</div>
-        <div className="text-sm">Inbox zero. Go build something.</div>
-      </div>
-    );
+    return <EmptyState />;
   }
 
   return (

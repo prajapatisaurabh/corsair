@@ -3,29 +3,40 @@ import { isConnected, getCorsair } from "@/server/corsair";
 import { getSetting, setSetting } from "@/server/db";
 
 export async function GET() {
-  if (!(await isConnected())) {
-    return NextResponse.json({ email: null });
+  const connected = await isConnected();
+  if (!connected) {
+    return NextResponse.json({ connected: false, email: null, picture: null });
   }
 
-  // Return cached value if available.
-  const cached = await getSetting("user_email");
-  if (cached) return NextResponse.json({ email: cached });
+  const cachedEmail = await getSetting("user_email");
+  const cachedPicture = await getSetting("user_picture");
+  if (cachedEmail) {
+    return NextResponse.json({ connected: true, email: cachedEmail, picture: cachedPicture });
+  }
 
   try {
     const corsair = await getCorsair();
     const accessToken = await corsair.gmail.keys.get_access_token();
-    if (!accessToken) return NextResponse.json({ email: null });
+    if (!accessToken) {
+      return NextResponse.json({ connected: true, email: null, picture: null });
+    }
 
-    const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+    // userinfo works with any valid Google OAuth token regardless of Gmail API being enabled
+    const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) return NextResponse.json({ email: null });
 
-    const data = await res.json();
-    const email: string = data.emailAddress ?? null;
-    if (email) await setSetting("user_email", email);
-    return NextResponse.json({ email });
+    if (userinfoRes.ok) {
+      const info = await userinfoRes.json();
+      const email: string = info.email ?? null;
+      const picture: string = info.picture ?? null;
+      if (email) await setSetting("user_email", email);
+      if (picture) await setSetting("user_picture", picture);
+      return NextResponse.json({ connected: true, email, picture });
+    }
   } catch {
-    return NextResponse.json({ email: null });
+    // fall through
   }
+
+  return NextResponse.json({ connected: true, email: null, picture: null });
 }
