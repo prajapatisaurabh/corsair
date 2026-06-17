@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isConnected } from "@/server/corsair";
 import { getUserId } from "@/server/session";
+
+export const metadata: Metadata = {
+  title: "Inbox",
+  robots: { index: false }, // app shell is behind auth — keep it out of search
+};
 
 /**
  * Server-side auth guard for the /app segment. Runs on every request (reads

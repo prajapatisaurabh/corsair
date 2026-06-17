@@ -103,6 +103,9 @@ export default async function Landing() {
           </p>
         </section>
 
+        <h2 className="text-2xl font-semibold tracking-tight text-center mb-6">
+          Why Tempo
+        </h2>
         <section className="grid sm:grid-cols-2 gap-4 pb-20">
           {FEATURES.map((f) => (
             <div

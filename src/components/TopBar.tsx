@@ -5,8 +5,16 @@ import { useTempo, visibleEmails } from "@/lib/store";
 import { UserMenu } from "./UserMenu";
 
 export function TopBar() {
-  const { live, filter, setFilter, emails, setView, setPaletteOpen } =
-    useTempo();
+  const {
+    live,
+    filter,
+    setFilter,
+    emails,
+    setView,
+    setPaletteOpen,
+    search,
+    setSearch,
+  } = useTempo();
   const counts = {
     all: visibleEmails(emails, "all").length,
     urgent: visibleEmails(emails, "urgent").length,
@@ -54,7 +62,37 @@ export function TopBar() {
         ))}
       </nav>
 
-      <div className="flex-1" />
+      <div className="flex-1 flex justify-center px-4 max-w-md mx-auto">
+        <div className="relative w-full">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 text-[13px]">
+            ⌕
+          </span>
+          <input
+            id="tempo-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === "Escape") {
+                setSearch("");
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            placeholder="Search mail…"
+            className="w-full bg-white/5 border border-white/10 rounded-md pl-7 pr-12 py-1 text-[14px] placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/40 focus:bg-white/8"
+          />
+          {search ? (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-[13px]"
+            >
+              ✕
+            </button>
+          ) : (
+            <kbd className="absolute right-2 top-1/2 -translate-y-1/2">/</kbd>
+          )}
+        </div>
+      </div>
 
       <button
         onClick={() => setView("triage")}

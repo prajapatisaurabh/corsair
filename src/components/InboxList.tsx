@@ -79,8 +79,9 @@ const PRIORITY_META: Record<
 };
 
 export function InboxList() {
-  const { emails, filter, selectedId, select, openDetail } = useTempo();
-  const list = visibleEmails(emails, filter);
+  const { emails, filter, search, selectedId, select, openDetail, setSearch } =
+    useTempo();
+  const list = visibleEmails(emails, filter, search);
 
   const groups: { priority: Priority; items: Email[] }[] = (
     ["urgent", "normal", "low"] as Priority[]
@@ -89,6 +90,21 @@ export function InboxList() {
     .filter((g) => g.items.length > 0);
 
   if (!list.length) {
+    // Distinguish "no search hits" from a genuinely empty inbox.
+    if (search.trim()) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
+          <div className="text-4xl">🔍</div>
+          <p className="text-zinc-400 text-sm">No mail matches “{search}”.</p>
+          <button
+            onClick={() => setSearch("")}
+            className="text-[13px] text-violet-300 hover:text-violet-200"
+          >
+            Clear search
+          </button>
+        </div>
+      );
+    }
     return <EmptyState />;
   }
 
@@ -135,6 +151,12 @@ function EmailRow({
     if (selected) ref.current?.scrollIntoView({ block: "nearest" });
   }, [selected]);
 
+  const laneBorder: Record<Priority, string> = {
+    urgent: "border-rose-400/60",
+    normal: "border-sky-400/30",
+    low: "border-transparent",
+  };
+
   return (
     <div
       ref={ref}
@@ -142,7 +164,7 @@ function EmailRow({
       className={`group flex items-center gap-3 px-4 py-2.5 cursor-pointer border-l-2 animate-slide-in ${
         selected
           ? "bg-violet-500/10 border-violet-400"
-          : "border-transparent hover:bg-white/4"
+          : `${laneBorder[email.priority]} hover:bg-white/4`
       }`}
     >
       <div

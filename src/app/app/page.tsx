@@ -12,6 +12,8 @@ import { Toasts } from "@/components/Toasts";
 import { ShortcutBar } from "@/components/ShortcutBar";
 
 export default function Home() {
+  const calendarExpanded = useTempo((s) => s.calendarExpanded);
+
   useEffect(() => {
     const s = useTempo.getState();
     s.load();
@@ -35,9 +37,19 @@ export default function Home() {
       const target = e.target as HTMLElement;
       if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") return;
 
+      // "/" jumps to search from anywhere in the inbox.
+      if (e.key === "/") {
+        e.preventDefault();
+        document.getElementById("tempo-search")?.focus();
+        return;
+      }
+
       switch (e.key) {
         case "Escape":
           s.closeOverlays();
+          break;
+        case "u":
+          s.undo();
           break;
         case "j":
         case "ArrowDown":
@@ -67,6 +79,9 @@ export default function Home() {
         case "t":
           s.setView("triage");
           break;
+        case "c":
+          s.toggleCalendar();
+          break;
         case "0":
           s.setFilter("all");
           break;
@@ -89,7 +104,11 @@ export default function Home() {
     <main className="relative h-screen w-screen flex flex-col overflow-hidden">
       <TopBar />
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 flex flex-col min-w-0">
+        <div
+          className={`flex flex-col min-w-0 transition-[width] duration-200 ${
+            calendarExpanded ? "w-[320px] shrink-0" : "flex-1"
+          }`}
+        >
           <InboxList />
         </div>
         <CalendarPanel />

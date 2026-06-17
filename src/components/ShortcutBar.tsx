@@ -7,7 +7,10 @@ const SHORTCUTS: [string, string][] = [
   ["R", "AI reply"],
   ["S", "schedule"],
   ["H", "snooze"],
+  ["U", "undo"],
   ["T", "triage"],
+  ["C", "expand cal"],
+  ["/", "search"],
   ["⌘K", "agent"],
   ["0-3", "lanes"],
 ];

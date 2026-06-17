@@ -141,7 +141,8 @@ export function planOffline(command: string): AgentPlan {
           title,
           start: start.toISOString(),
           end: end.toISOString(),
-          attendees: recipient ? ["me@tempo.app", recipient] : ["me@tempo.app"],
+          // Only the invitee — Google auto-adds the signed-in user as organizer.
+          attendees: recipient ? [recipient] : [],
         },
       });
     }

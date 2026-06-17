@@ -25,11 +25,19 @@ export async function PATCH(req: NextRequest) {
     try {
       const { getTenant } = await import("@/server/corsair");
       const corsair = await getTenant(userId);
-      if (patch.archived) {
+      if (patch.archived === true) {
         await corsair.gmail.api.messages.modify({
           userId: "me",
           id,
           removeLabelIds: ["INBOX"],
+        });
+      }
+      if (patch.archived === false) {
+        // Undo: put the message back in the inbox.
+        await corsair.gmail.api.messages.modify({
+          userId: "me",
+          id,
+          addLabelIds: ["INBOX"],
         });
       }
       if (patch.unread === false) {
@@ -52,16 +60,33 @@ export async function POST(req: NextRequest) {
   if (!userId)
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { to, subject, body } = await req.json();
+  const { to, subject, body, threadId, inReplyTo } = await req.json();
 
   if (await isConnected(userId)) {
     try {
       const { getTenant } = await import("@/server/corsair");
       const corsair = await getTenant(userId);
+      // RFC-2822 headers. In-Reply-To / References make Gmail thread the reply
+      // under the original conversation (threadId alone is not enough).
+      const headers = [
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        "Content-Type: text/plain; charset=utf-8",
+      ];
+      if (inReplyTo) {
+        headers.push(
+          `In-Reply-To: <${inReplyTo}>`,
+          `References: <${inReplyTo}>`,
+        );
+      }
       const raw = Buffer.from(
-        `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
+        `${headers.join("\r\n")}\r\n\r\n${body}`,
       ).toString("base64url");
-      await corsair.gmail.api.messages.send({ userId: "me", raw });
+      await corsair.gmail.api.messages.send({
+        userId: "me",
+        raw,
+        ...(threadId ? { threadId } : {}),
+      });
     } catch (err) {
       console.error("corsair gmail.messages.send failed", err);
       return NextResponse.json({ error: "send failed" }, { status: 502 });
