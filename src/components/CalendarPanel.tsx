@@ -87,7 +87,11 @@ export function CalendarPanel() {
               : "text-violet-300 hover:bg-violet-500/10"
           }`}
         >
-          {offset === 0 ? (calendarExpanded ? "This week" : "Next days") : "Jump to today"}
+          {offset === 0
+            ? calendarExpanded
+              ? "This week"
+              : "Next days"
+            : "Jump to today"}
         </button>
         <button
           onClick={() => setOffset((o) => o + dayCount)}
