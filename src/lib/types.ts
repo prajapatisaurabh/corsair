@@ -42,7 +42,21 @@ export interface CalendarEvent {
   color?: string;
 }
 
-export type AgentActionType = "create_event" | "send_email" | "search" | "unknown";
+/** One message within a Gmail conversation (for the thread view). */
+export interface ThreadMessage {
+  id: string;
+  fromName: string;
+  fromEmail: string;
+  date: string; // ISO
+  body: string;
+  snippet: string;
+}
+
+export type AgentActionType =
+  | "create_event"
+  | "send_email"
+  | "search"
+  | "unknown";
 
 export interface AgentAction {
   type: AgentActionType;

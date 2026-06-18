@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTempo } from "@/lib/store";
 import { fmtDay, fmtTime } from "@/lib/time";
+import { ThreadMessage } from "@/lib/types";
 
 export function EmailDetail() {
   const {
@@ -15,10 +16,33 @@ export function EmailDetail() {
     archive,
     schedule,
     sendReply,
+    saveDraft,
     openDetail,
   } = useTempo();
   const email = emails.find((e) => e.id === selectedId);
   const [reply, setReply] = useState("");
+  // Full Gmail conversation for the open email (fetched lazily).
+  const [thread, setThread] = useState<ThreadMessage[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+
+  // Pull the whole thread when a new email opens. Network fetch is a genuine
+  // side effect, so it belongs in an effect; we abort if the email changes.
+  const threadId = email?.threadId;
+  useEffect(() => {
+    if (!detailOpen || !threadId) return;
+    const ctrl = new AbortController();
+    fetch(`/api/thread?id=${encodeURIComponent(threadId)}`, {
+      signal: ctrl.signal,
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        setThreadLoading(false);
+        setThread(d.messages ?? []);
+      })
+      .catch(() => setThreadLoading(false));
+    return () => ctrl.abort();
+  }, [detailOpen, threadId]);
+
   // Reset the textarea when a new AI draft arrives (state-during-render
   // pattern — https://react.dev/learn/you-might-not-need-an-effect)
   const [prevDraft, setPrevDraft] = useState(replyDraft);
@@ -35,7 +59,7 @@ export function EmailDetail() {
     <div className="absolute inset-0 z-30 flex" onClick={closeOverlays}>
       <div className="flex-1 bg-black/50 backdrop-blur-[2px]" />
       <div
-        className="w-[620px] h-full bg-[#131020] border-l border-white/10 flex flex-col animate-pop-in shadow-2xl"
+        className="w-155 h-full bg-[#131020] border-l border-white/10 flex flex-col animate-pop-in shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 pt-5 pb-4 border-b border-white/8">
@@ -65,8 +89,45 @@ export function EmailDetail() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 text-[15.5px] leading-relaxed text-zinc-200 whitespace-pre-wrap">
-          {email.body}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {thread.length > 1 ? (
+            <div className="flex flex-col gap-3">
+              <div className="text-[12px] uppercase tracking-wider text-zinc-600">
+                Conversation · {thread.length} messages
+              </div>
+              {thread.map((m, i) => (
+                <div
+                  key={m.id}
+                  className={`rounded-lg border px-4 py-3 ${
+                    i === thread.length - 1
+                      ? "border-violet-500/30 bg-violet-500/5"
+                      : "border-white/8 bg-white/3"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-1.5 text-[13px]">
+                    <span className="text-zinc-200 font-medium truncate">
+                      {m.fromName}
+                    </span>
+                    <span className="text-zinc-500 shrink-0">
+                      {fmtDay(m.date)} {fmtTime(m.date)}
+                    </span>
+                  </div>
+                  <div className="text-[15px] leading-relaxed text-zinc-300 whitespace-pre-wrap">
+                    {m.body}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[15.5px] leading-relaxed text-zinc-200 whitespace-pre-wrap">
+              {threadLoading && (
+                <div className="text-[13px] text-zinc-600 mb-2 animate-pulse">
+                  loading conversation…
+                </div>
+              )}
+              {email.body}
+            </div>
+          )}
         </div>
 
         {email.timeIntent && !email.scheduledEventId && (
@@ -84,7 +145,7 @@ export function EmailDetail() {
               className="shrink-0 text-[14px] px-3 py-1.5 rounded-md bg-amber-500/90 text-black font-semibold hover:bg-amber-400"
             >
               Schedule + invite{" "}
-              <kbd className="!bg-black/20 !border-black/30 !text-black/70">
+              <kbd className="bg-black/20! border-black/30! text-black/70!">
                 S
               </kbd>
             </button>
@@ -115,6 +176,13 @@ export function EmailDetail() {
             )}
             <div className="mt-2 flex justify-end gap-2">
               <button
+                onClick={() => saveDraft(email, reply)}
+                title="Save to your Gmail Drafts to review/send later"
+                className="text-[14px] px-3 py-1.5 rounded-md bg-white/8 hover:bg-white/15"
+              >
+                Save draft
+              </button>
+              <button
                 onClick={() => sendReply(email, reply)}
                 className="text-[14px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold"
               >
@@ -128,7 +196,7 @@ export function EmailDetail() {
               onClick={() => openDetail(true)}
               className="px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-medium"
             >
-              Reply with AI <kbd className="!bg-black/20">R</kbd>
+              Reply with AI <kbd className="bg-black/20!">R</kbd>
             </button>
             <button
               onClick={() => {

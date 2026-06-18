@@ -102,7 +102,7 @@ export async function gmailToEmail(msg: any): Promise<Email> {
 
 /** Walks a Gmail payload tree for the first text/plain part. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractBody(payload: any): string {
+export function extractBody(payload: any): string {
   if (!payload) return "";
   if (payload.mimeType === "text/plain" && payload.body?.data) {
     return Buffer.from(payload.body.data, "base64url").toString("utf8");

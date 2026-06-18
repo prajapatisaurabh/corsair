@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { Email, CalendarEvent, AgentPlan, Priority } from "./types";
+import { fmtTime } from "./time";
 
 export type ViewMode = "timeline" | "triage";
 
@@ -46,6 +47,7 @@ interface TempoState {
   schedule: (id: string) => Promise<void>;
   undo: () => Promise<void>;
   sendReply: (email: Email, body: string) => Promise<void>;
+  saveDraft: (email: Email, body: string) => Promise<void>;
   setFilter: (f: Priority | "all") => void;
   setSearch: (q: string) => void;
   setView: (v: ViewMode) => void;
@@ -291,7 +293,7 @@ export const useTempo = create<TempoState>((set, get) => ({
         sourceEmailId: email.id,
       }),
     });
-    const { event } = await res.json();
+    const { event, shiftedFrom } = await res.json();
     set((s) => ({
       events: s.events.some((ev) => ev.id === event.id)
         ? s.events
@@ -300,10 +302,18 @@ export const useTempo = create<TempoState>((set, get) => ({
         e.id === id ? { ...e, scheduledEventId: event.id, archived: true } : e,
       ),
     }));
-    get().toast(
-      `Scheduled: ${email.timeIntent.phrase} → invite sent to ${email.from.email}`,
-      "success",
-    );
+    if (shiftedFrom) {
+      // The requested slot was busy — Tempo slid it to the next free one.
+      get().toast(
+        `${fmtTime(shiftedFrom)} was busy → booked ${fmtTime(event.start)} (next free) · invite sent`,
+        "success",
+      );
+    } else {
+      get().toast(
+        `Scheduled: ${email.timeIntent.phrase} → invite sent to ${email.from.email}`,
+        "success",
+      );
+    }
   },
 
   sendReply: async (email, body) => {
@@ -326,6 +336,30 @@ export const useTempo = create<TempoState>((set, get) => ({
     get().toast(`Reply sent to ${email.from.email}`, "success");
   },
 
+  saveDraft: async (email, body) => {
+    set({ detailOpen: false, replyDraft: null });
+    const res = await fetch("/api/drafts", {
+      method: "POST",
+      body: JSON.stringify({
+        to: email.from.email,
+        subject: /^re:/i.test(email.subject)
+          ? email.subject
+          : `Re: ${email.subject}`,
+        body,
+        threadId: email.threadId,
+        inReplyTo: email.id,
+      }),
+    });
+    if (res.ok) {
+      get().toast(
+        `Saved to Gmail drafts — reply to ${email.from.name}`,
+        "success",
+      );
+    } else {
+      get().toast("Could not save draft", "error");
+    }
+  },
+
   setFilter: (f) => set({ filter: f }),
   setSearch: (q) => set({ search: q }),
   setView: (v) => set({ view: v }),
@@ -339,13 +373,18 @@ export const useTempo = create<TempoState>((set, get) => ({
           method: "POST",
           body: JSON.stringify(action.event),
         });
-        const { event } = await res.json();
+        const { event, shiftedFrom } = await res.json();
         set((s) => ({
           events: s.events.some((ev) => ev.id === event.id)
             ? s.events
             : [...s.events, event],
         }));
-        get().toast(`Invite sent: ${event.title}`, "success");
+        get().toast(
+          shiftedFrom
+            ? `Invite sent: ${event.title} — moved to ${fmtTime(event.start)} (next free)`
+            : `Invite sent: ${event.title}`,
+          "success",
+        );
       } else if (action.type === "send_email" && action.email) {
         await fetch("/api/emails", {
           method: "POST",

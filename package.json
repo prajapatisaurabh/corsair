@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "node .next/standalone/server.js",
     "lint": "eslint",
-    "clean": "rm -rf .next"
+    "clean": "rm -rf .next",
+    "mcp": "node --env-file=.env scripts/mcp-server.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
