@@ -161,10 +161,10 @@ export default function Landing() {
             />
             <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
               <Image
-                src="/product-shot.png"
-                alt="The Tempo app — an email timeline beside a calendar, with the ⌘K agent palette open"
-                width={1536}
-                height={1024}
+                src="/product-image-2.jpg"
+                alt="The Tempo app with the ⌘K agent palette open — “Tell the agent what to do…” with example commands"
+                width={1918}
+                height={964}
                 priority
                 className="rounded-xl w-full h-auto"
               />
@@ -202,6 +202,26 @@ export default function Landing() {
               <p className="text-sm text-zinc-400 leading-relaxed">{s.desc}</p>
             </div>
           ))}
+        </section>
+
+        {/* Inbox screenshot */}
+        <SectionHeading kicker="// the timeline" title="Your whole inbox, in lanes" />
+        <section className="pb-20">
+          <div className="relative">
+            <div
+              aria-hidden
+              className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-fuchsia-600/15 via-violet-500/10 to-transparent blur-3xl"
+            />
+            <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
+              <Image
+                src="/product-image-1.jpg"
+                alt="The Tempo inbox — emails sorted into priority lanes beside a “waiting to be scheduled” panel"
+                width={1918}
+                height={962}
+                className="rounded-xl w-full h-auto"
+              />
+            </div>
+          </div>
         </section>
 
         {/* FAQ */}
