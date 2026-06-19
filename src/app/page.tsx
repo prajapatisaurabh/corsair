@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { isConnected } from "@/server/corsair";
-import { getUserId } from "@/server/session";
+import Image from "next/image";
 import { Brand } from "@/components/Brand";
 import { SiteFooter } from "@/components/SiteFooter";
+
+// CTAs point at /app unconditionally: the /app layout guards auth server-side,
+// sending connected users into the inbox and everyone else to /login. That keeps
+// this marketing page free of per-request session reads, so it prerenders static.
+const PRIMARY_HREF = "/app";
+const PRIMARY_LABEL = "Open Tempo →";
 
 const FEATURES = [
   {
@@ -64,13 +69,23 @@ const FAQ = [
   },
 ];
 
-export default async function Landing() {
-  const connected = await isConnected(await getUserId());
-  const primaryHref = connected ? "/app" : "/login";
-  const primaryLabel = connected ? "Open inbox →" : "Connect Google →";
+export default function Landing() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
 
   return (
     <div className="min-h-screen flex flex-col text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <header className="sticky top-0 z-20 backdrop-blur-md bg-[#0b0a12]/70 border-b border-white/5">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-6 h-16">
           <Brand />
@@ -81,29 +96,18 @@ export default async function Landing() {
             >
               Shortcuts
             </Link>
-            {connected ? (
-              <Link
-                href="/app"
-                className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-colors"
-              >
-                Open app
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/app"
-                  className="text-zinc-400 hover:text-white px-3 py-1.5 transition-colors"
-                >
-                  Open app
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-colors"
-                >
-                  Sign in
-                </Link>
-              </>
-            )}
+            <Link
+              href="/app"
+              className="text-zinc-400 hover:text-white px-3 py-1.5 transition-colors"
+            >
+              Open app
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-colors"
+            >
+              Sign in
+            </Link>
           </nav>
         </div>
       </header>
@@ -129,10 +133,10 @@ export default async function Landing() {
           </p>
           <div className="mt-9 flex items-center justify-center gap-3">
             <Link
-              href={primaryHref}
+              href={PRIMARY_HREF}
               className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 font-semibold transition-colors shadow-lg shadow-violet-600/25"
             >
-              {primaryLabel}
+              {PRIMARY_LABEL}
             </Link>
             <Link
               href="/shortcuts"
@@ -141,15 +145,31 @@ export default async function Landing() {
               See the shortcuts
             </Link>
           </div>
-          <p className="mt-4 text-[13px] text-zinc-600">
+          <p className="mt-4 text-[13px] text-zinc-500">
             One sign-in connects Gmail and Calendar — tokens encrypted by
             Corsair.
           </p>
         </section>
 
-        {/* Command palette mock */}
+        {/* Product shot */}
         <section className="pb-20">
-          <PaletteMock />
+          <div className="relative">
+            {/* Soft gradient glow behind the screenshot */}
+            <div
+              aria-hidden
+              className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-violet-600/20 via-fuchsia-500/10 to-transparent blur-3xl"
+            />
+            <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
+              <Image
+                src="/product-shot.png"
+                alt="The Tempo app — an email timeline beside a calendar, with the ⌘K agent palette open"
+                width={1536}
+                height={1024}
+                priority
+                className="rounded-xl w-full h-auto"
+              />
+            </div>
+          </div>
         </section>
 
         {/* Features */}
@@ -216,11 +236,32 @@ export default async function Landing() {
               fly through.
             </p>
             <Link
-              href={primaryHref}
+              href={PRIMARY_HREF}
               className="mt-7 inline-block px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 font-semibold transition-colors shadow-lg shadow-violet-600/25"
             >
-              {primaryLabel}
+              {PRIMARY_LABEL}
             </Link>
+          </div>
+        </section>
+
+        {/* Hackathon credit */}
+        <section className="pb-24">
+          <div className="max-w-xl mx-auto text-center">
+            <div className="font-mono text-[12px] uppercase tracking-wider text-zinc-500 mb-4">
+              Proudly built for
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-white/3 p-2 overflow-hidden">
+              <Image
+                src="/hackathon.png"
+                alt="ChaiCode × Corsair Hackathon — live, with a MacBook Air prize"
+                width={1200}
+                height={630}
+                className="rounded-xl w-full h-auto"
+              />
+            </div>
+            <p className="mt-4 text-[13px] text-zinc-500">
+              The ChaiCode × Corsair Hackathon · Web Dev 2026 Cohort
+            </p>
           </div>
         </section>
       </main>
@@ -243,44 +284,3 @@ function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
   );
 }
 
-function PaletteMock() {
-  return (
-    <div className="max-w-2xl mx-auto rounded-2xl border border-white/10 bg-[#13111d]/80 shadow-2xl shadow-black/40 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 h-10 border-b border-white/8">
-        <span className="w-3 h-3 rounded-full bg-red-400/70" />
-        <span className="w-3 h-3 rounded-full bg-amber-400/70" />
-        <span className="w-3 h-3 rounded-full bg-green-400/70" />
-        <span className="ml-3 font-mono text-[12px] text-zinc-500">
-          tempo — ⌘K
-        </span>
-      </div>
-      <div className="p-5 font-mono text-[13.5px] leading-relaxed">
-        <div className="flex items-center gap-2 text-zinc-300">
-          <span className="text-violet-400">❯</span>
-          <span>
-            invite alex thursday 9am and email him too
-            <span className="inline-block w-2 h-4 -mb-0.5 ml-0.5 bg-violet-400 animate-pulse" />
-          </span>
-        </div>
-        <div className="mt-4 space-y-2 text-[13px]">
-          <div className="flex items-center gap-2 text-zinc-400">
-            <span className="text-green-400">✓</span> Calendar · &ldquo;Sync with
-            Alex&rdquo; — Thu 9:00–9:30am
-          </div>
-          <div className="flex items-center gap-2 text-zinc-400">
-            <span className="text-green-400">✓</span> Gmail · draft reply to
-            alex@example.com
-          </div>
-        </div>
-        <div className="mt-5 flex items-center gap-3 text-[12px] text-zinc-500">
-          <span>
-            <kbd>↵</kbd> confirm
-          </span>
-          <span>
-            <kbd>esc</kbd> cancel
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -10,6 +10,35 @@ type UserData = {
   picture: string | null;
 };
 
+function Avatar({
+  size,
+  picture,
+  email,
+  initial,
+}: {
+  size: number;
+  picture: string | null;
+  email: string | null;
+  initial: string;
+}) {
+  return picture ? (
+    <Image
+      src={picture}
+      alt={email ?? "User"}
+      width={size}
+      height={size}
+      className="object-cover w-full h-full"
+    />
+  ) : (
+    <span
+      className="w-full h-full flex items-center justify-center bg-violet-600 font-semibold text-white"
+      style={{ fontSize: size * 0.43 }}
+    >
+      {initial}
+    </span>
+  );
+}
+
 export function UserMenu() {
   const [data, setData] = useState<UserData | null>(null);
   const [open, setOpen] = useState(false);
@@ -35,16 +64,6 @@ export function UserMenu() {
 
   const initial = (data.name || data.email || "G")[0].toUpperCase();
 
-  const Avatar = ({ size }: { size: number }) => (
-    data.picture ? (
-      <Image src={data.picture} alt={data.email ?? "User"} width={size} height={size} className="object-cover w-full h-full" />
-    ) : (
-      <span className="w-full h-full flex items-center justify-center bg-violet-600 font-semibold text-white" style={{ fontSize: size * 0.43 }}>
-        {initial}
-      </span>
-    )
-  );
-
   return (
     <div ref={ref} className="relative">
       <button
@@ -52,14 +71,24 @@ export function UserMenu() {
         className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-white/10 hover:ring-violet-500/60 transition-all focus:outline-none"
         aria-label="User menu"
       >
-        <Avatar size={28} />
+        <Avatar
+          size={28}
+          picture={data.picture}
+          email={data.email}
+          initial={initial}
+        />
       </button>
 
       {open && (
         <div className="absolute right-0 top-9 w-56 rounded-xl border border-white/10 bg-[#1a1825] shadow-xl z-50 overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-white/8">
             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-              <Avatar size={32} />
+              <Avatar
+                size={32}
+                picture={data.picture}
+                email={data.email}
+                initial={initial}
+              />
             </div>
             <div className="min-w-0">
               {data.name && (

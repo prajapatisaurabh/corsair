@@ -80,7 +80,10 @@ export function CommandPalette() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               e.stopPropagation();
-              if (e.key === "Enter") plan && runnable ? execute() : submit();
+              if (e.key === "Enter") {
+                if (plan && runnable) execute();
+                else submit();
+              }
               if (e.key === "Escape") setPaletteOpen(false);
             }}
             placeholder="Tell the agent what to do…"

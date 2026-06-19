@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Brand } from "@/components/Brand";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export function LegalPage({
   title,
@@ -10,17 +11,12 @@ export function LegalPage({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#0b0a12] text-zinc-100">
-      <header className="max-w-3xl mx-auto flex items-center px-6 h-16">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-linear-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-sm font-bold text-white">
-            T
-          </div>
-          <span className="font-semibold tracking-tight text-lg">Tempo</span>
-        </Link>
+    <div className="min-h-screen flex flex-col text-zinc-100">
+      <header className="max-w-3xl w-full mx-auto flex items-center px-6 h-16">
+        <Brand />
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 pt-10 pb-24">
+      <main className="max-w-3xl w-full mx-auto px-6 pt-10 pb-24 flex-1">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         <p className="mt-2 text-sm text-zinc-500">Effective {effective}</p>
 
@@ -29,19 +25,7 @@ export function LegalPage({
         </div>
       </main>
 
-      <footer className="border-t border-white/8 py-6 text-center text-[14px] text-zinc-600">
-        <Link href="/" className="hover:text-zinc-400">
-          Tempo
-        </Link>{" "}
-        ·{" "}
-        <Link href="/privacy" className="hover:text-zinc-400">
-          Privacy
-        </Link>{" "}
-        ·{" "}
-        <Link href="/terms" className="hover:text-zinc-400">
-          Terms
-        </Link>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
