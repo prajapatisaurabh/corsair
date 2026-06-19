@@ -81,7 +81,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col text-zinc-100">
+    <div className="min-h-screen flex flex-col text-zinc-100 overflow-x-clip">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
@@ -151,23 +151,29 @@ export default function Landing() {
           </p>
         </section>
 
-        {/* Product shot */}
+        {/* Product shot — breaks out wider than the text column so the UI reads big */}
         <section className="pb-20">
-          <div className="relative">
-            {/* Soft gradient glow behind the screenshot */}
-            <div
-              aria-hidden
-              className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-violet-600/20 via-fuchsia-500/10 to-transparent blur-3xl"
-            />
-            <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
-              <Image
-                src="/product-image-2.jpg"
-                alt="The Tempo app with the ⌘K agent palette open — “Tell the agent what to do…” with example commands"
-                width={1918}
-                height={964}
-                priority
-                className="rounded-xl w-full h-auto"
-              />
+          <div className="relative left-1/2 w-screen -translate-x-1/2">
+            <div className="mx-auto max-w-[1500px] px-4 sm:px-6">
+              <div className="relative">
+                {/* Soft gradient glow behind the screenshot */}
+                <div
+                  aria-hidden
+                  className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-violet-600/20 via-fuchsia-500/10 to-transparent blur-3xl"
+                />
+                <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
+                  <Image
+                    src="/product-image-1.jpg"
+                    alt="The Tempo inbox — emails sorted into priority lanes beside a “waiting to be scheduled” panel"
+                    width={1918}
+                    height={962}
+                    priority
+                    quality={90}
+                    sizes="100vw"
+                    className="rounded-xl w-full h-auto"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -188,7 +194,10 @@ export default function Landing() {
         </section>
 
         {/* How it works */}
-        <SectionHeading kicker="// how it works" title="Three steps to inbox zero" />
+        <SectionHeading
+          kicker="// how it works"
+          title="Three steps to inbox zero"
+        />
         <section className="grid sm:grid-cols-3 gap-4 pb-20">
           {STEPS.map((s) => (
             <div
@@ -204,22 +213,28 @@ export default function Landing() {
           ))}
         </section>
 
-        {/* Inbox screenshot */}
-        <SectionHeading kicker="// the timeline" title="Your whole inbox, in lanes" />
+        {/* Agent palette screenshot */}
+        <SectionHeading kicker="// the agent" title="Just tell it what to do" />
         <section className="pb-20">
-          <div className="relative">
-            <div
-              aria-hidden
-              className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-fuchsia-600/15 via-violet-500/10 to-transparent blur-3xl"
-            />
-            <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
-              <Image
-                src="/product-image-1.jpg"
-                alt="The Tempo inbox — emails sorted into priority lanes beside a “waiting to be scheduled” panel"
-                width={1918}
-                height={962}
-                className="rounded-xl w-full h-auto"
-              />
+          <div className="relative left-1/2 w-screen -translate-x-1/2">
+            <div className="mx-auto max-w-[1500px] px-4 sm:px-6">
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="absolute -inset-x-10 -top-10 bottom-0 bg-linear-to-tr from-fuchsia-600/15 via-violet-500/10 to-transparent blur-3xl"
+                />
+                <div className="relative rounded-2xl border border-white/10 bg-white/3 p-1.5 shadow-2xl shadow-black/50">
+                  <Image
+                    src="/product-image-2.jpg"
+                    alt="The Tempo ⌘K agent palette open — “Tell the agent what to do…” with example commands"
+                    width={1918}
+                    height={964}
+                    quality={90}
+                    sizes="100vw"
+                    className="rounded-xl w-full h-auto"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -303,4 +318,3 @@ function SectionHeading({ kicker, title }: { kicker: string; title: string }) {
     </div>
   );
 }
-
