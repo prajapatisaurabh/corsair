@@ -154,7 +154,7 @@ export default function Landing() {
         {/* Product shot — breaks out wider than the text column so the UI reads big */}
         <section className="pb-20">
           <div className="relative left-1/2 w-screen -translate-x-1/2">
-            <div className="mx-auto max-w-[1500px] px-4 sm:px-6">
+            <div className="mx-auto max-w-375 px-4 sm:px-6">
               <div className="relative">
                 {/* Soft gradient glow behind the screenshot */}
                 <div
@@ -217,7 +217,7 @@ export default function Landing() {
         <SectionHeading kicker="// the agent" title="Just tell it what to do" />
         <section className="pb-20">
           <div className="relative left-1/2 w-screen -translate-x-1/2">
-            <div className="mx-auto max-w-[1500px] px-4 sm:px-6">
+            <div className="mx-auto max-w-375 px-4 sm:px-6">
               <div className="relative">
                 <div
                   aria-hidden
