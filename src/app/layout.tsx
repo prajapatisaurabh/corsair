@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const bricolage = Bricolage_Grotesque({
+// Geist + Geist Mono — Vercel's developer-loved typefaces, clean on screen and
+// a natural fit for a keyboard-first tool.
+const geistSans = Geist({
   variable: "--font-app-sans",
   subsets: ["latin"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   variable: "--font-app-mono",
   subsets: ["latin"],
 });
@@ -55,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
