@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { getCorsair, oauthConfigured, redirectUri } from "@/server/corsair";
+import {
+  getCorsair,
+  oauthConfigured,
+  redirectUri,
+  combinedGoogleScopes,
+} from "@/server/corsair";
 import { getOrCreateUserId } from "@/server/session";
 
 /**
  * POST /api/auth/connect → { url } Google consent screen via Corsair.
  *
- * The flow covers both plugins: gmail first, the callback then chains to
- * googlecalendar (same Google account, second consent is instant).
+ * ONE consent screen covers both plugins: we run Corsair's gmail OAuth flow but
+ * widen its scope to the Gmail + Calendar union, so Google asks once. The
+ * callback then links the resulting token to googlecalendar — no second screen.
  */
 export async function POST() {
   if (!oauthConfigured()) {
@@ -25,7 +31,15 @@ export async function POST() {
       tenantId: userId,
       redirectUri: redirectUri(),
     });
-    return NextResponse.json({ url });
+    // Corsair's gmail URL only carries gmail scopes; widen it to also include
+    // the Calendar scope so a single consent grants both. State is unchanged
+    // (still Corsair-signed for the gmail plugin), so the callback round-trips.
+    const consentUrl = new URL(url);
+    consentUrl.searchParams.set(
+      "scope",
+      (await combinedGoogleScopes()).join(" "),
+    );
+    return NextResponse.json({ url: consentUrl.toString() });
   } catch (err) {
     console.error("connect link generation failed", err);
     return NextResponse.json(

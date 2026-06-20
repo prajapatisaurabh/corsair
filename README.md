@@ -2,10 +2,18 @@
 
 A Superhuman-style Gmail + Google Calendar client built for the **Corsair Hackathon**.
 
+![ChaiCode × Corsair Hackathon — LIVE · Prizes: MacBook Air & ChaiCode Swags](public/hackathon.png)
+
 > Almost every important email is secretly about time — "can we meet Thursday?",
 > "deadline Friday", "invoice due Monday". Gmail keeps mail and calendar in
 > separate apps. Tempo fuses them into one keyboard-first timeline, powered by
 > [Corsair](https://corsair.dev) for all Gmail / Google Calendar plumbing.
+
+## Screenshots
+
+| Keyboard-first timeline | ⌘K agent palette (Corsair MCP) |
+|---|---|
+| ![Tempo inbox and triage UI with Urgent / Normal / Low priority lanes and the scheduled panel](public/product-image-1.jpg) | ![The ⌘K command palette — "Tell the agent what to do…" — powered by Corsair MCP over Gmail + Google Calendar](public/product-image-2.jpg) |
 
 ## Run it (local dev)
 
