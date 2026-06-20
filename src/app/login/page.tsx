@@ -61,7 +61,7 @@ export default function Login() {
             </button>
 
             {error && (
-              <pre className="mt-4 text-[12px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2.5 whitespace-pre-wrap break-words max-h-72 overflow-auto font-mono">
+              <pre className="mt-4 text-[12px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2.5 whitespace-pre-wrap wrap-break-word max-h-72 overflow-auto font-mono">
                 {error}
               </pre>
             )}
