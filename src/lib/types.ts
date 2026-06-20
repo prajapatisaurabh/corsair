@@ -70,3 +70,19 @@ export interface AgentPlan {
   reply: string;
   actions: AgentAction[];
 }
+
+/**
+ * Shape every API route returns on failure. Built on the server by
+ * `errorResponse()` (src/server/http.ts) and read on the client by
+ * `readApiError()` (src/lib/api.ts).
+ */
+export interface ApiError {
+  /** Human-readable message. */
+  error: string;
+  /** Error class name, when thrown from an Error (e.g. "TypeError"). */
+  name?: string;
+  /** HTTP status code. */
+  status: number;
+  /** Stack trace — debugging aid; only meaningful in development. */
+  stack?: string;
+}

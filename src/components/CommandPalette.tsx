@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTempo } from "@/lib/store";
+import { readApiError } from "@/lib/api";
 import { AgentPlan } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -15,7 +16,7 @@ const SUGGESTIONS = [
  * Nothing executes until the user confirms with Enter.
  */
 export function CommandPalette() {
-  const { paletteOpen, setPaletteOpen, runPlan } = useTempo();
+  const { paletteOpen, setPaletteOpen, runPlan, toast } = useTempo();
   const [input, setInput] = useState("");
   const [plan, setPlan] = useState<AgentPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,12 +47,24 @@ export function CommandPalette() {
     if (!input.trim() || loading) return;
     setLoading(true);
     setPlan(null);
-    const res = await fetch("/api/agent", {
-      method: "POST",
-      body: JSON.stringify({ command: input }),
-    });
-    setPlan(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetch("/api/agent", {
+        method: "POST",
+        body: JSON.stringify({ command: input }),
+      });
+      if (!res.ok)
+        throw new Error(
+          await readApiError(res, "The agent couldn't plan that"),
+        );
+      setPlan(await res.json());
+    } catch (err) {
+      toast(
+        err instanceof Error ? err.message : "Agent request failed",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const execute = async () => {

@@ -6,6 +6,7 @@ import {
   combinedGoogleScopes,
 } from "@/server/corsair";
 import { getOrCreateUserId } from "@/server/session";
+import { errorResponse } from "@/server/http";
 
 /**
  * POST /api/auth/connect → { url } Google consent screen via Corsair.
@@ -16,9 +17,9 @@ import { getOrCreateUserId } from "@/server/session";
  */
 export async function POST() {
   if (!oauthConfigured()) {
-    return NextResponse.json(
-      { error: "Google OAuth isn't configured on this server yet." },
-      { status: 503 },
+    return errorResponse(
+      "Google OAuth isn't configured on this server yet.",
+      503,
     );
   }
 
@@ -42,9 +43,8 @@ export async function POST() {
     return NextResponse.json({ url: consentUrl.toString() });
   } catch (err) {
     console.error("connect link generation failed", err);
-    return NextResponse.json(
-      { error: "Could not start the Google flow." },
-      { status: 500 },
-    );
+    // Return the full error detail (message, name, status, stack) so the
+    // failure is debuggable straight from the client/network response.
+    return errorResponse(err, 500);
   }
 }

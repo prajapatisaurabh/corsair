@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { Email, CalendarEvent, AgentPlan, Priority } from "./types";
 import { fmtTime } from "./time";
+import { readApiError } from "./api";
 
 export type ViewMode = "timeline" | "triage";
 
@@ -110,19 +111,30 @@ export const useTempo = create<TempoState>((set, get) => ({
   lastUndo: null,
 
   load: async () => {
-    const [er, vr] = await Promise.all([
-      fetch("/api/emails"),
-      fetch("/api/events"),
-    ]);
-    const { emails, live } = await er.json();
-    const { events } = await vr.json();
-    set((s) => ({
-      emails,
-      events,
-      live,
-      selectedId:
-        s.selectedId ?? visibleEmails(emails, s.filter)[0]?.id ?? null,
-    }));
+    try {
+      const [er, vr] = await Promise.all([
+        fetch("/api/emails"),
+        fetch("/api/events"),
+      ]);
+      if (!er.ok)
+        throw new Error(await readApiError(er, "Couldn't load inbox"));
+      if (!vr.ok)
+        throw new Error(await readApiError(vr, "Couldn't load calendar"));
+      const { emails, live } = await er.json();
+      const { events } = await vr.json();
+      set((s) => ({
+        emails,
+        events,
+        live,
+        selectedId:
+          s.selectedId ?? visibleEmails(emails, s.filter)[0]?.id ?? null,
+      }));
+    } catch (err) {
+      get().toast(
+        err instanceof Error ? err.message : "Couldn't load your data",
+        "error",
+      );
+    }
   },
 
   connectStream: () => {
@@ -194,16 +206,27 @@ export const useTempo = create<TempoState>((set, get) => ({
       }));
     }
     if (withDraft) {
-      const res = await fetch("/api/draft", {
-        method: "POST",
-        body: JSON.stringify({
-          subject: email.subject,
-          body: email.body,
-          senderName: email.from.name,
-        }),
-      });
-      const { draft } = await res.json();
-      set({ replyDraft: draft, draftLoading: false });
+      try {
+        const res = await fetch("/api/draft", {
+          method: "POST",
+          body: JSON.stringify({
+            subject: email.subject,
+            body: email.body,
+            senderName: email.from.name,
+          }),
+        });
+        if (!res.ok) throw new Error(await readApiError(res, "Draft failed"));
+        const { draft } = await res.json();
+        set({ replyDraft: draft, draftLoading: false });
+      } catch (err) {
+        // Don't strand the user on the "drafting…" spinner — clear it, drop
+        // out of reply mode, and surface why.
+        set({ draftLoading: false, replyDraft: null });
+        get().toast(
+          err instanceof Error ? err.message : "Couldn't draft a reply",
+          "error",
+        );
+      }
     }
   },
 
@@ -216,16 +239,30 @@ export const useTempo = create<TempoState>((set, get) => ({
     }),
 
   archive: async (id) => {
+    const prev = get().emails.find((e) => e.id === id);
+    if (!prev) return;
+    // Optimistic: hide it immediately, confirm the write, then toast — or roll
+    // back if the server rejects it.
     set((s) => ({
       emails: s.emails.map((e) => (e.id === id ? { ...e, archived: true } : e)),
       lastUndo: { emailId: id, patch: { archived: false }, label: "Archived" },
     }));
     get().moveSelection(1);
-    get().toast("Archived · press U to undo", "success");
-    await fetch("/api/emails", {
+    const res = await fetch("/api/emails", {
       method: "PATCH",
       body: JSON.stringify({ id, archived: true }),
     });
+    if (res.ok) {
+      get().toast("Archived · press U to undo", "success");
+    } else {
+      set((s) => ({
+        emails: s.emails.map((e) =>
+          e.id === id ? { ...e, archived: prev.archived } : e,
+        ),
+        lastUndo: null,
+      }));
+      get().toast(await readApiError(res, "Couldn't archive"), "error");
+    }
   },
 
   snooze: async (id) => {
@@ -242,11 +279,21 @@ export const useTempo = create<TempoState>((set, get) => ({
       },
     }));
     get().moveSelection(1);
-    get().toast("Snoozed 3 hours · press U to undo", "info");
-    await fetch("/api/emails", {
+    const res = await fetch("/api/emails", {
       method: "PATCH",
       body: JSON.stringify({ id, snoozedUntil: until }),
     });
+    if (res.ok) {
+      get().toast("Snoozed 3 hours · press U to undo", "info");
+    } else {
+      set((s) => ({
+        emails: s.emails.map((e) =>
+          e.id === id ? { ...e, snoozedUntil: prev ?? undefined } : e,
+        ),
+        lastUndo: null,
+      }));
+      get().toast(await readApiError(res, "Couldn't snooze"), "error");
+    }
   },
 
   undo: async () => {
@@ -255,6 +302,7 @@ export const useTempo = create<TempoState>((set, get) => ({
       get().toast("Nothing to undo", "info");
       return;
     }
+    const prev = get().emails.find((e) => e.id === entry.emailId);
     set((s) => ({
       emails: s.emails.map((e) =>
         e.id === entry.emailId ? { ...e, ...entry.patch } : e,
@@ -262,11 +310,22 @@ export const useTempo = create<TempoState>((set, get) => ({
       selectedId: entry.emailId,
       lastUndo: null,
     }));
-    get().toast(`Undid: ${entry.label.toLowerCase()}`, "info");
-    await fetch("/api/emails", {
+    const res = await fetch("/api/emails", {
       method: "PATCH",
       body: JSON.stringify({ id: entry.emailId, ...entry.patch }),
     });
+    if (res.ok) {
+      get().toast(`Undid: ${entry.label.toLowerCase()}`, "info");
+    } else {
+      // Re-apply the pre-undo state and keep the undo entry so it can retry.
+      if (prev) {
+        set((s) => ({
+          emails: s.emails.map((e) => (e.id === entry.emailId ? prev : e)),
+          lastUndo: entry,
+        }));
+      }
+      get().toast(await readApiError(res, "Couldn't undo"), "error");
+    }
   },
 
   schedule: async (id) => {
@@ -293,6 +352,10 @@ export const useTempo = create<TempoState>((set, get) => ({
         sourceEmailId: email.id,
       }),
     });
+    if (!res.ok) {
+      get().toast(await readApiError(res, "Couldn't schedule"), "error");
+      return;
+    }
     const { event, shiftedFrom } = await res.json();
     set((s) => ({
       events: s.events.some((ev) => ev.id === event.id)
@@ -318,7 +381,7 @@ export const useTempo = create<TempoState>((set, get) => ({
 
   sendReply: async (email, body) => {
     set({ detailOpen: false, replyDraft: null });
-    await fetch("/api/emails", {
+    const res = await fetch("/api/emails", {
       method: "POST",
       body: JSON.stringify({
         to: email.from.email,
@@ -332,6 +395,11 @@ export const useTempo = create<TempoState>((set, get) => ({
         inReplyTo: email.id,
       }),
     });
+    // Only archive + claim success once the send actually succeeds.
+    if (!res.ok) {
+      get().toast(await readApiError(res, "Couldn't send reply"), "error");
+      return;
+    }
     get().archive(email.id);
     get().toast(`Reply sent to ${email.from.email}`, "success");
   },
@@ -356,7 +424,7 @@ export const useTempo = create<TempoState>((set, get) => ({
         "success",
       );
     } else {
-      get().toast("Could not save draft", "error");
+      get().toast(await readApiError(res, "Couldn't save draft"), "error");
     }
   },
 
@@ -373,6 +441,13 @@ export const useTempo = create<TempoState>((set, get) => ({
           method: "POST",
           body: JSON.stringify(action.event),
         });
+        if (!res.ok) {
+          get().toast(
+            await readApiError(res, "Couldn't create the event"),
+            "error",
+          );
+          continue;
+        }
         const { event, shiftedFrom } = await res.json();
         set((s) => ({
           events: s.events.some((ev) => ev.id === event.id)
@@ -386,10 +461,17 @@ export const useTempo = create<TempoState>((set, get) => ({
           "success",
         );
       } else if (action.type === "send_email" && action.email) {
-        await fetch("/api/emails", {
+        const res = await fetch("/api/emails", {
           method: "POST",
           body: JSON.stringify(action.email),
         });
+        if (!res.ok) {
+          get().toast(
+            await readApiError(res, "Couldn't send the email"),
+            "error",
+          );
+          continue;
+        }
         get().toast(`Email sent to ${action.email.to}`, "success");
       }
     }

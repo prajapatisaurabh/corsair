@@ -58,9 +58,12 @@ const GOOGLE_PLUGINS = ["gmail", "googlecalendar"] as const;
  */
 export async function combinedGoogleScopes(): Promise<string[]> {
   const corsair = await getCorsair();
-  const scopes = new Set<string>();
+  // Registered plugins live under Corsair's internal symbol, not corsair.plugins.
+  const { CORSAIR_INTERNAL } = await import("corsair/core");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const plugin of (corsair.plugins ?? []) as any[]) {
+  const plugins: any[] = corsair[CORSAIR_INTERNAL]?.plugins ?? [];
+  const scopes = new Set<string>();
+  for (const plugin of plugins) {
     if ((GOOGLE_PLUGINS as readonly string[]).includes(plugin.id)) {
       for (const s of plugin.oauthConfig?.scopes ?? []) scopes.add(s);
     }
@@ -100,7 +103,10 @@ export async function linkGoogleTokenToCalendar(userId: string): Promise<void> {
   );
   if (!existing.rows.length) {
     const { generateDEK, encryptDEK } = await import("corsair/core");
-    const encryptedDek = await encryptDEK(generateDEK(), process.env.CORSAIR_KEK!);
+    const encryptedDek = await encryptDEK(
+      generateDEK(),
+      process.env.CORSAIR_KEK!,
+    );
     await pool.query(
       `INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, dek)
        VALUES ($1, $2, $3, '{}'::jsonb, $4)`,
@@ -116,7 +122,8 @@ export async function linkGoogleTokenToCalendar(userId: string): Promise<void> {
   const expiresAt = await tenant.gmail.keys.get_expires_at();
 
   await tenant.googlecalendar.keys.set_access_token(accessToken);
-  if (refreshToken) await tenant.googlecalendar.keys.set_refresh_token(refreshToken);
+  if (refreshToken)
+    await tenant.googlecalendar.keys.set_refresh_token(refreshToken);
   if (expiresAt) await tenant.googlecalendar.keys.set_expires_at(expiresAt);
 }
 

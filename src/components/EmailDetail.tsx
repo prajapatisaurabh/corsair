@@ -34,7 +34,9 @@ export function EmailDetail() {
     fetch(`/api/thread?id=${encodeURIComponent(threadId)}`, {
       signal: ctrl.signal,
     })
-      .then((r) => r.json())
+      // Thread view is a non-blocking enrichment — on any error we just fall
+      // back to the single message already shown, no toast needed.
+      .then((r) => (r.ok ? r.json() : { messages: [] }))
       .then((d) => {
         setThreadLoading(false);
         setThread(d.messages ?? []);

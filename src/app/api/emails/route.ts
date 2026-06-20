@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEmails, updateEmail, broadcast } from "@/server/store";
 import { isConnected } from "@/server/corsair";
 import { getUserId } from "@/server/session";
+import { errorResponse } from "@/server/http";
 
 export async function GET() {
   const userId = await getUserId();
@@ -13,12 +14,11 @@ export async function GET() {
 // PATCH /api/emails — { id, ...patch } for archive / snooze / read state
 export async function PATCH(req: NextRequest) {
   const userId = await getUserId();
-  if (!userId)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) return errorResponse("Please sign in.", 401);
 
   const { id, ...patch } = await req.json();
   const email = await updateEmail(userId, id, patch);
-  if (!email) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!email) return errorResponse("That email no longer exists.", 404);
 
   if (await isConnected(userId)) {
     // Mirror the change to Gmail via Corsair (archive => remove INBOX label).
@@ -57,8 +57,7 @@ export async function PATCH(req: NextRequest) {
 // POST /api/emails — send an email { to, subject, body }
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
-  if (!userId)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) return errorResponse("Please sign in.", 401);
 
   const { to, subject, body, threadId, inReplyTo } = await req.json();
 
@@ -89,7 +88,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (err) {
       console.error("corsair gmail.messages.send failed", err);
-      return NextResponse.json({ error: "send failed" }, { status: 502 });
+      return errorResponse(err, 502);
     }
   }
 

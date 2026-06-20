@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { isConnected } from "@/server/corsair";
 import { getUserId } from "@/server/session";
 import { extractBody } from "@/server/sync";
+import { errorResponse } from "@/server/http";
 import { ThreadMessage } from "@/lib/types";
 
 // GET /api/thread?id=<threadId> — the full Gmail conversation, oldest→newest.
 export async function GET(req: NextRequest) {
   const userId = await getUserId();
-  if (!userId)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) return errorResponse("Please sign in.", 401);
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ messages: [] });

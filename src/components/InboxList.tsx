@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTempo, visibleEmails } from "@/lib/store";
+import { readApiError } from "@/lib/api";
 import { relativeTime } from "@/lib/time";
 import { Email, Priority } from "@/lib/types";
 
@@ -20,8 +21,7 @@ function EmptyState() {
         toast(`Synced ${count} emails`, "success");
         useTempo.getState().load();
       } else {
-        const { error } = await res.json();
-        toast(error ?? "Sync failed", "error");
+        toast(await readApiError(res, "Sync failed"), "error");
       }
     } catch {
       toast("Could not reach server", "error");

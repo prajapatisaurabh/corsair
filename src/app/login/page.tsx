@@ -19,9 +19,17 @@ export default function Login() {
         window.location.href = data.url;
         return;
       }
-      setError(data.error ?? "Google sign-in isn't configured yet.");
-    } catch {
-      setError("Could not reach the server.");
+      // Surface the full server error — message, status, name, and stack.
+      const parts = [
+        `${data.name ?? "Error"}: ${data.error ?? "Google sign-in isn't configured yet."}`,
+        `HTTP ${data.status ?? res.status}`,
+      ];
+      if (data.stack) parts.push("", data.stack);
+      setError(parts.join("\n"));
+    } catch (err) {
+      setError(
+        `Could not reach the server.\n${err instanceof Error ? `${err.name}: ${err.message}\n${err.stack ?? ""}` : String(err)}`,
+      );
     }
     setLoading(false);
   };
@@ -53,9 +61,9 @@ export default function Login() {
             </button>
 
             {error && (
-              <div className="mt-4 text-[14px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2.5">
+              <pre className="mt-4 text-[12px] text-amber-300 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2.5 whitespace-pre-wrap break-words max-h-72 overflow-auto font-mono">
                 {error}
-              </div>
+              </pre>
             )}
           </div>
 

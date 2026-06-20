@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getEvents, addEvent, updateEmail } from "@/server/store";
 import { isConnected } from "@/server/corsair";
 import { getUserId } from "@/server/session";
+import { errorResponse } from "@/server/http";
 import { CalendarEvent } from "@/lib/types";
 
 export async function GET() {
@@ -53,8 +54,7 @@ function findFreeSlot(
 // POST /api/events — create event { title, start, end, attendees, sourceEmailId? }
 export async function POST(req: NextRequest) {
   const userId = await getUserId();
-  if (!userId)
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!userId) return errorResponse("Please sign in.", 401);
 
   const body = await req.json();
   const event: CalendarEvent = {
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       if (created?.id) event.id = created.id;
     } catch (err) {
       console.error("corsair googlecalendar.events.create failed", err);
-      return NextResponse.json({ error: "create failed" }, { status: 502 });
+      return errorResponse(err, 502);
     }
   }
 
