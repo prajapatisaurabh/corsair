@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Brand } from "@/components/Brand";
 import { SiteFooter } from "@/components/SiteFooter";
+import { HeaderCta } from "@/components/HeaderCta";
 
 // CTAs point at /app unconditionally: the /app layout guards auth server-side,
 // sending connected users into the inbox and everyone else to /login. That keeps
@@ -102,12 +103,7 @@ export default function Landing() {
             >
               Open app
             </Link>
-            <Link
-              href="/login"
-              className="px-4 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-colors"
-            >
-              Sign in
-            </Link>
+            <HeaderCta />
           </nav>
         </div>
       </header>
