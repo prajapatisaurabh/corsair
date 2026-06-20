@@ -82,7 +82,7 @@ export function CommandPalette() {
       onClick={() => setPaletteOpen(false)}
     >
       <div
-        className="w-[680px] bg-[#151223] border border-white/12 rounded-xl shadow-2xl animate-pop-in overflow-hidden"
+        className="w-170 bg-[#151223] border border-white/12 rounded-xl shadow-2xl animate-pop-in overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
@@ -150,7 +150,7 @@ export function CommandPalette() {
                   </span>
                   <span className="flex-1 truncate">{a.summary}</span>
                   {a.email && (
-                    <span className="text-[13px] text-zinc-500 truncate max-w-[180px]">
+                    <span className="text-[13px] text-zinc-500 truncate max-w-45">
                       “
                       {a.email.body
                         .split("\n")
@@ -176,7 +176,7 @@ export function CommandPalette() {
                   className="text-[14px] px-4 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
                 >
                   {executing ? "Running via Corsair…" : "Execute"}{" "}
-                  <kbd className="!bg-black/25">↵</kbd>
+                  <kbd className="bg-black/25!">↵</kbd>
                 </button>
               </div>
             )}
